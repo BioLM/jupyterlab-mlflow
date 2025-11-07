@@ -5,11 +5,15 @@ A JupyterLab extension for browsing MLflow experiments, runs, models, and artifa
 ## Features
 
 - Browse MLflow experiments, runs, models, and artifacts
-- Tree and list views for easy navigation
+- Tree view for hierarchical navigation
+- Details/Object view for exploring metadata and child objects
 - View artifacts in new JupyterLab tabs
 - Copy experiment/run/model IDs to clipboard
+- Generate and insert MLflow Python API code snippets
 - Connect to remote MLflow tracking servers
+- Launch local MLflow server with SQLite backend
 - Settings UI with environment variable fallback
+- MLflow shortcuts panel for common operations
 
 ## Requirements
 
@@ -26,7 +30,7 @@ pip install jupyterlab-mlflow
 Or install from source:
 
 ```bash
-git clone https://github.com/yourusername/jupyterlab-mlflow.git
+git clone https://github.com/BioLM/jupyterlab-mlflow.git
 cd jupyterlab-mlflow
 pip install -e .
 jlpm install
@@ -63,6 +67,27 @@ jlpm watch
 # Run tests
 pytest
 ```
+
+## Publishing
+
+This package is automatically published to PyPI when a new release is created on GitHub.
+
+### Setting Up Automated Publishing
+
+1. **Configure PyPI Trusted Publishing:**
+   - Go to https://pypi.org/manage/project/jupyterlab-mlflow/settings/publishing/
+   - Add a trusted publisher with:
+     - Owner: `BioLM`
+     - Repository: `jupyterlab-mlflow`
+     - Workflow name: `publish.yml`
+
+2. **Create a GitHub Release:**
+   - Update version in `package.json`
+   - Tag and push: `git tag v0.1.0 && git push origin v0.1.0`
+   - Create a release on GitHub with the same tag
+   - The workflow will automatically build and publish to PyPI
+
+See [PUBLISHING.md](PUBLISHING.md) for detailed instructions.
 
 ## License
 

@@ -8,9 +8,9 @@
     "jupyterlab-extension",
     "mlflow"
   ],
-  "homepage": "https://github.com/yourusername/jupyterlab-mlflow",
+  "homepage": "https://github.com/BioLM/jupyterlab-mlflow",
   "bugs": {
-    "url": "https://github.com/yourusername/jupyterlab-mlflow/issues"
+    "url": "https://github.com/BioLM/jupyterlab-mlflow/issues"
   },
   "license": "BSD-3-Clause",
   "author": "",
@@ -25,7 +25,7 @@
   "style": "style/index.css",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/jupyterlab-mlflow.git"
+    "url": "https://github.com/BioLM/jupyterlab-mlflow.git"
   },
   "scripts": {
     "build": "jlpm build:lib && jlpm build:labextension:dev",

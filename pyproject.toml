@@ -7,6 +7,7 @@ name = "jupyterlab-mlflow"
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.8"
+dynamic = ["version"]
 authors = [
     { name = "JupyterLab MLflow Contributors", email = "" },
 ]
@@ -39,10 +40,10 @@ test = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/jupyterlab-mlflow"
-"Bug Tracker" = "https://github.com/yourusername/jupyterlab-mlflow/issues"
-Documentation = "https://github.com/yourusername/jupyterlab-mlflow#readme"
-Source = "https://github.com/yourusername/jupyterlab-mlflow"
+Homepage = "https://github.com/BioLM/jupyterlab-mlflow"
+"Bug Tracker" = "https://github.com/BioLM/jupyterlab-mlflow/issues"
+Documentation = "https://github.com/BioLM/jupyterlab-mlflow#readme"
+Source = "https://github.com/BioLM/jupyterlab-mlflow"
 
 [tool.hatch.version]
 source = "nodejs"

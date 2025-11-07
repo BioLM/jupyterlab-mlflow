@@ -6,7 +6,7 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
-import { ICommandPalette } from '@jupyterlab/apputils';
+import { ICommandPalette, IFrame, MainAreaWidget } from '@jupyterlab/apputils';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { IMainMenu } from '@jupyterlab/mainmenu';
 import { ITranslator } from '@jupyterlab/translation';
@@ -23,6 +23,7 @@ import { MLflowClient } from './mlflow';
 namespace CommandIDs {
   export const open = 'mlflow:open';
   export const toggle = 'mlflow:toggle';
+  export const openUI = 'mlflow:open-ui';
 }
 
 /**
@@ -65,7 +66,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     }
 
     // Create widget
-    const widget = new MLflowWidget(settings, mlflowClient);
+    const widget = new MLflowWidget(settings, mlflowClient, app);
     widget.id = 'mlflow-widget';
     widget.title.icon = mlflowIcon;
 
@@ -97,10 +98,53 @@ const plugin: JupyterFrontEndPlugin<void> = {
       }
     });
 
+    commands.addCommand(CommandIDs.openUI, {
+      label: 'Open MLflow UI',
+      execute: async () => {
+        const trackingUri = await settings.getTrackingUri();
+        if (!trackingUri) {
+          // Show settings if no URI is configured
+          if (!widget.isAttached) {
+            app.shell.add(widget, 'left', { rank: 1000 });
+          }
+          app.shell.activateById(widget.id);
+          // Could trigger settings panel here
+          return;
+        }
+
+        // Construct MLflow UI URL
+        const mlflowUIUrl = trackingUri.replace(/\/$/, '');
+        
+        // Create IFrame widget
+        const iframe = new IFrame({
+          sandbox: ['allow-same-origin', 'allow-scripts', 'allow-popups', 'allow-forms'],
+          referrerPolicy: 'no-referrer'
+        });
+        iframe.url = mlflowUIUrl;
+        iframe.title.label = 'MLflow UI';
+        iframe.title.icon = mlflowIcon;
+        iframe.title.closable = true;
+
+        // Create main area widget
+        const mainWidget = new MainAreaWidget({ content: iframe });
+        mainWidget.id = 'mlflow-ui-widget';
+        mainWidget.title.label = 'MLflow UI';
+        mainWidget.title.icon = mlflowIcon;
+        mainWidget.title.closable = true;
+
+        // Add to main area
+        app.shell.add(mainWidget, 'main', { activate: true });
+      }
+    });
+
     // Add to command palette
     if (palette) {
       palette.addItem({
         command: CommandIDs.open,
+        category: 'MLflow'
+      });
+      palette.addItem({
+        command: CommandIDs.openUI,
         category: 'MLflow'
       });
     }

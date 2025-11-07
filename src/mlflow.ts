@@ -113,6 +113,20 @@ export class MLflowClient {
   }
 
   /**
+   * Get base URL for constructing download links
+   */
+  getBaseUrl(): string {
+    return this._serverSettings.baseUrl;
+  }
+
+  /**
+   * Get server settings for use with JupyterLab services
+   */
+  getServerSettings(): ServerConnection.ISettings {
+    return this._serverSettings;
+  }
+
+  /**
    * Get base API URL
    */
   private getApiUrl(endpoint: string): string {
@@ -120,7 +134,9 @@ export class MLflowClient {
     const url = URLExt.join(baseUrl, 'mlflow', 'api', endpoint);
     
     if (this._trackingUri) {
-      return `${url}?tracking_uri=${encodeURIComponent(this._trackingUri)}`;
+      // Check if URL already has query parameters
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}tracking_uri=${encodeURIComponent(this._trackingUri)}`;
     }
     
     return url;
@@ -216,8 +232,11 @@ export class MLflowClient {
   /**
    * Get artifacts for a run
    */
-  async getArtifacts(runId: string): Promise<IArtifactsResponse> {
-    return this.request<IArtifactsResponse>(`runs/${runId}/artifacts`);
+  async getArtifacts(runId: string, path?: string): Promise<IArtifactsResponse> {
+    const url = path 
+      ? `runs/${runId}/artifacts?path=${encodeURIComponent(path)}`
+      : `runs/${runId}/artifacts`;
+    return this.request<IArtifactsResponse>(url);
   }
 
   /**
@@ -226,18 +245,42 @@ export class MLflowClient {
   async downloadArtifact(runId: string, path: string): Promise<Blob> {
     const url = this.getApiUrl(`runs/${runId}/artifacts/download?path=${encodeURIComponent(path)}`);
     
+    console.log('Downloading artifact from URL:', url);
+    
     const response = await ServerConnection.makeRequest(
       url,
       {},
       this._serverSettings
     );
 
+    console.log('Download response status:', response.status, response.statusText);
+    console.log('Download response headers:', response.headers);
+
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: response.statusText }));
-      throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`);
+      let errorMessage = response.statusText;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        // If response is not JSON, try to get text
+        try {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        } catch (e2) {
+          // Ignore
+        }
+      }
+      throw new Error(`HTTP ${response.status}: ${errorMessage}`);
     }
 
-    return response.blob();
+    const blob = await response.blob();
+    console.log('Downloaded blob size:', blob.size, 'type:', blob.type);
+    
+    if (blob.size === 0) {
+      throw new Error('Downloaded file is empty');
+    }
+    
+    return blob;
   }
 
   /**

@@ -3,6 +3,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { JupyterFrontEnd } from '@jupyterlab/application';
+import { IFrame, MainAreaWidget } from '@jupyterlab/apputils';
+import { LabIcon } from '@jupyterlab/ui-components';
 import { MLflowSettings } from '../settings';
 import { MLflowClient } from '../mlflow';
 import { TreeView } from './TreeView';
@@ -21,13 +24,22 @@ type ViewMode = 'tree' | 'list';
 interface IMLflowPanelProps {
   settings: MLflowSettings;
   mlflowClient: MLflowClient;
+  app: JupyterFrontEnd;
 }
+
+/**
+ * MLflow icon (reused from index.ts)
+ */
+const mlflowIcon = new LabIcon({
+  name: 'jupyterlab-mlflow:icon',
+  svgstr: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><title>Mlflow SVG Icon</title><path fill="currentColor" d="M11.883.002a12.044 12.044 0 0 0-9.326 19.463l3.668-2.694A7.573 7.573 0 0 1 12.043 4.45v2.867l6.908-5.14A12 12 0 0 0 11.883.002m9.562 4.533L17.777 7.23a7.573 7.573 0 0 1-5.818 12.322v-2.867l-6.908 5.14a12.046 12.046 0 0 0 16.394-17.29"/></svg>`
+});
 
 /**
  * Main MLflow panel component
  */
 export function MLflowPanel(props: IMLflowPanelProps): JSX.Element {
-  const { settings, mlflowClient } = props;
+  const { settings, mlflowClient, app } = props;
   const [viewMode, setViewMode] = useState<ViewMode>('tree');
   const [showSettings, setShowSettings] = useState(false);
   const [trackingUri, setTrackingUri] = useState<string>('');
@@ -50,6 +62,38 @@ export function MLflowPanel(props: IMLflowPanelProps): JSX.Element {
     await settings.setTrackingUri(newUri);
   };
 
+  const handleOpenMLflowUI = async () => {
+    const uri = trackingUri || await settings.getTrackingUri();
+    if (!uri) {
+      // Show settings if no URI is configured
+      setShowSettings(true);
+      return;
+    }
+
+    // Construct MLflow UI URL (remove trailing slash if present)
+    const mlflowUIUrl = uri.replace(/\/$/, '');
+    
+    // Create IFrame widget
+    const iframe = new IFrame({
+      sandbox: ['allow-same-origin', 'allow-scripts', 'allow-popups', 'allow-forms'],
+      referrerPolicy: 'no-referrer'
+    });
+    iframe.url = mlflowUIUrl;
+    iframe.title.label = 'MLflow UI';
+    iframe.title.icon = mlflowIcon;
+    iframe.title.closable = true;
+
+    // Create main area widget
+    const mainWidget = new MainAreaWidget({ content: iframe });
+    mainWidget.id = 'mlflow-ui-widget';
+    mainWidget.title.label = 'MLflow UI';
+    mainWidget.title.icon = mlflowIcon;
+    mainWidget.title.closable = true;
+
+    // Add to main area
+    app.shell.add(mainWidget, 'main', { activate: true });
+  };
+
   return (
     <div className="mlflow-panel">
       <div className="mlflow-panel-header">
@@ -68,6 +112,13 @@ export function MLflowPanel(props: IMLflowPanelProps): JSX.Element {
             title="List View"
           >
             📋
+          </button>
+          <button
+            className="mlflow-button"
+            onClick={handleOpenMLflowUI}
+            title="Open MLflow UI in new tab"
+          >
+            🌐
           </button>
           <button
             className="mlflow-button"

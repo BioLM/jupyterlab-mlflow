@@ -211,10 +211,16 @@ class ArtifactsHandler(MLflowBaseHandler):
             run = client.get_run(run_id)
             artifact_uri = run.info.artifact_uri
             
+            # Get optional path parameter for listing artifacts in a directory
+            path = self.get_query_argument("path", None)
+            
             # List artifacts using MLflow client
             artifacts = []
             try:
-                artifact_list = client.list_artifacts(run_id)
+                if path:
+                    artifact_list = client.list_artifacts(run_id, path)
+                else:
+                    artifact_list = client.list_artifacts(run_id)
                 for artifact in artifact_list:
                     artifacts.append({
                         "path": artifact.path,
@@ -250,8 +256,40 @@ class ArtifactDownloadHandler(MLflowBaseHandler):
             tracking_uri = self.get_tracking_uri()
             client = get_mlflow_client(tracking_uri)
             
+            # Check if artifact is a directory first
+            try:
+                artifacts = client.list_artifacts(run_id, path)
+                # If list_artifacts returns items, it's a directory
+                if artifacts:
+                    self.set_status(400)
+                    self.write({"error": f"'{path}' is a directory. Cannot download directories. Expand to see files inside."})
+                    return
+            except Exception:
+                # If list_artifacts fails, try to download anyway
+                pass
+            
+            # Check if the path itself is a directory by trying to list it
+            try:
+                # List parent directory to check if this path is a directory
+                parent_path = os.path.dirname(path) if os.path.dirname(path) else None
+                if parent_path:
+                    parent_artifacts = client.list_artifacts(run_id, parent_path)
+                    for art in parent_artifacts:
+                        if art.path == path and art.is_dir:
+                            self.set_status(400)
+                            self.write({"error": f"'{path}' is a directory. Cannot download directories. Expand to see files inside."})
+                            return
+            except Exception:
+                pass
+            
             # Download artifact
             artifact_path = client.download_artifacts(run_id, path)
+            
+            # Check if downloaded path is actually a directory
+            if os.path.isdir(artifact_path):
+                self.set_status(400)
+                self.write({"error": f"'{path}' is a directory. Cannot download directories. Expand to see files inside."})
+                return
             
             # Read and return file content
             with open(artifact_path, "rb") as f:
@@ -276,8 +314,14 @@ class ArtifactDownloadHandler(MLflowBaseHandler):
             self.set_header("Content-Disposition", f'attachment; filename="{os.path.basename(path)}"')
             self.write(content)
         except Exception as e:
-            self.set_status(500)
-            self.write({"error": str(e)})
+            error_msg = str(e)
+            # Check if error is about directory
+            if "Is a directory" in error_msg or "[Errno 21]" in error_msg:
+                self.set_status(400)
+                self.write({"error": f"'{path}' is a directory. Cannot download directories. Expand to see files inside."})
+            else:
+                self.set_status(500)
+                self.write({"error": error_msg})
 
 
 class ModelsHandler(MLflowBaseHandler):

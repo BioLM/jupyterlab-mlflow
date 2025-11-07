@@ -4,7 +4,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { MLflowClient, IExperiment, IRun, IModel } from '../mlflow';
-import { copyExperimentId, copyRunId, copyModelName } from '../utils/copy';
+import { copyExperimentId, copyRunId, copyModelName, copyCode } from '../utils/copy';
+import {
+  generateLoadModelCode,
+  generateGetRunCode,
+  generateGetExperimentCode,
+  generateLoadModelFromRunCode,
+  generateSearchRunsCode
+} from '../utils/codegen';
 
 /**
  * List view props
@@ -110,24 +117,45 @@ export function ListView(props: IListViewProps): JSX.Element {
     setContextMenu({ x: e.clientX, y: e.clientY, item, type });
   };
 
-  // Handle copy
+  // Handle copy ID
   const handleCopy = async (item: any, type: string) => {
-    let success = false;
-    let id = '';
-    
     if (type === 'experiment') {
-      id = item.experiment_id;
-      success = await copyExperimentId(id);
+      await copyExperimentId(item.experiment_id);
     } else if (type === 'run') {
-      id = item.run_id;
-      success = await copyRunId(id);
+      await copyRunId(item.run_id);
     } else if (type === 'model') {
-      id = item.name;
-      success = await copyModelName(id);
+      await copyModelName(item.name);
     }
     
-    if (success) {
-      alert(`Copied ${type} ID: ${id}`);
+    setContextMenu(null);
+  };
+
+  // Handle copy code
+  const handleCopyCode = async (item: any, type: string, codeType: string) => {
+    let code = '';
+    
+    if (type === 'model') {
+      if (codeType === 'load') {
+        const version = item.latest_versions?.[0]?.version;
+        const stage = item.latest_versions?.[0]?.stage;
+        code = generateLoadModelCode(item.name, version, stage);
+      }
+    } else if (type === 'run') {
+      if (codeType === 'get') {
+        code = generateGetRunCode(item.run_id);
+      } else if (codeType === 'load-model') {
+        code = generateLoadModelFromRunCode(item.run_id);
+      }
+    } else if (type === 'experiment') {
+      if (codeType === 'get') {
+        code = generateGetExperimentCode(item.experiment_id);
+      } else if (codeType === 'search') {
+        code = generateSearchRunsCode(item.experiment_id);
+      }
+    }
+    
+    if (code) {
+      await copyCode(code);
     }
     
     setContextMenu(null);
@@ -166,17 +194,29 @@ export function ListView(props: IListViewProps): JSX.Element {
             >
               <td>{exp.experiment_id}</td>
               <td>{exp.name}</td>
-              <td>
-                <button
-                  className="mlflow-button-small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCopy(exp, 'experiment');
-                  }}
-                >
-                  Copy ID
-                </button>
-              </td>
+                <td>
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    <button
+                      className="mlflow-code-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopyCode(exp, 'experiment', 'get');
+                      }}
+                      title="Copy code: Get experiment"
+                    >
+                      &lt;/&gt;
+                    </button>
+                    <button
+                      className="mlflow-button-small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopy(exp, 'experiment');
+                      }}
+                    >
+                      Copy ID
+                    </button>
+                  </div>
+                </td>
             </tr>
           ))}
         </tbody>
@@ -237,15 +277,27 @@ export function ListView(props: IListViewProps): JSX.Element {
                   ))}
                 </td>
                 <td>
-                  <button
-                    className="mlflow-button-small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCopy(run, 'run');
-                    }}
-                  >
-                    Copy ID
-                  </button>
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    <button
+                      className="mlflow-code-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopyCode(run, 'run', 'get');
+                      }}
+                      title="Copy code: Get run"
+                    >
+                      &lt;/&gt;
+                    </button>
+                    <button
+                      className="mlflow-button-small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopy(run, 'run');
+                      }}
+                    >
+                      Copy ID
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -293,15 +345,27 @@ export function ListView(props: IListViewProps): JSX.Element {
               </td>
               <td>{new Date(model.last_updated_timestamp).toLocaleString()}</td>
               <td>
-                <button
-                  className="mlflow-button-small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCopy(model, 'model');
-                  }}
-                >
-                  Copy Name
-                </button>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <button
+                    className="mlflow-code-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopyCode(model, 'model', 'load');
+                    }}
+                    title="Copy code: Load model"
+                  >
+                    &lt;/&gt;
+                  </button>
+                  <button
+                    className="mlflow-button-small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopy(model, 'model');
+                    }}
+                  >
+                    Copy Name
+                  </button>
+                </div>
               </td>
             </tr>
           ))}
@@ -367,12 +431,66 @@ export function ListView(props: IListViewProps): JSX.Element {
             className="mlflow-context-menu"
             style={{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }}
           >
-            <div
-              className="mlflow-context-menu-item"
-              onClick={() => handleCopy(contextMenu.item, contextMenu.type)}
-            >
-              Copy {contextMenu.type} ID
-            </div>
+            {contextMenu.type === 'model' && (
+              <>
+                <div
+                  className="mlflow-context-menu-item"
+                  onClick={() => handleCopyCode(contextMenu.item, 'model', 'load')}
+                >
+                  Copy code: Load model
+                </div>
+                <div
+                  className="mlflow-context-menu-item"
+                  onClick={() => handleCopy(contextMenu.item, 'model')}
+                >
+                  Copy model name
+                </div>
+              </>
+            )}
+            {contextMenu.type === 'run' && (
+              <>
+                <div
+                  className="mlflow-context-menu-item"
+                  onClick={() => handleCopyCode(contextMenu.item, 'run', 'get')}
+                >
+                  Copy code: Get run
+                </div>
+                <div
+                  className="mlflow-context-menu-item"
+                  onClick={() => handleCopyCode(contextMenu.item, 'run', 'load-model')}
+                >
+                  Copy code: Load model from run
+                </div>
+                <div
+                  className="mlflow-context-menu-item"
+                  onClick={() => handleCopy(contextMenu.item, 'run')}
+                >
+                  Copy run ID
+                </div>
+              </>
+            )}
+            {contextMenu.type === 'experiment' && (
+              <>
+                <div
+                  className="mlflow-context-menu-item"
+                  onClick={() => handleCopyCode(contextMenu.item, 'experiment', 'get')}
+                >
+                  Copy code: Get experiment
+                </div>
+                <div
+                  className="mlflow-context-menu-item"
+                  onClick={() => handleCopyCode(contextMenu.item, 'experiment', 'search')}
+                >
+                  Copy code: Search runs
+                </div>
+                <div
+                  className="mlflow-context-menu-item"
+                  onClick={() => handleCopy(contextMenu.item, 'experiment')}
+                >
+                  Copy experiment ID
+                </div>
+              </>
+            )}
           </div>
         </>
       )}

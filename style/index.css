@@ -1,0 +1,316 @@
+/**
+ * MLflow Extension Styles
+ */
+
+.mlflow-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mlflow-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.mlflow-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--jp-border-color1);
+  background: var(--jp-layout-color1);
+}
+
+.mlflow-panel-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.mlflow-panel-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.mlflow-button {
+  background: var(--jp-layout-color2);
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 3px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.mlflow-button:hover {
+  background: var(--jp-layout-color3);
+}
+
+.mlflow-button.active {
+  background: var(--jp-brand-color1);
+  color: white;
+}
+
+.mlflow-button-small {
+  background: var(--jp-layout-color2);
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 3px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.mlflow-button-primary {
+  background: var(--jp-brand-color1);
+  color: white;
+}
+
+.mlflow-button-close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.mlflow-panel-content {
+  flex: 1;
+  overflow: auto;
+  padding: 8px;
+}
+
+.mlflow-settings-container {
+  border-bottom: 1px solid var(--jp-border-color1);
+  background: var(--jp-layout-color2);
+}
+
+.mlflow-settings-panel {
+  padding: 12px;
+}
+
+.mlflow-settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.mlflow-settings-header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.mlflow-settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mlflow-settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mlflow-settings-field label {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.mlflow-input {
+  padding: 6px 8px;
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 3px;
+  font-size: 12px;
+  background: var(--jp-layout-color1);
+  color: var(--jp-content-font-color1);
+}
+
+.mlflow-settings-help {
+  font-size: 11px;
+  color: var(--jp-content-font-color2);
+}
+
+.mlflow-settings-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.mlflow-test-result {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.mlflow-test-result.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.mlflow-test-result.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.mlflow-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--jp-border-color1);
+  background: var(--jp-layout-color1);
+}
+
+.mlflow-tab {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  font-size: 12px;
+}
+
+.mlflow-tab:hover {
+  background: var(--jp-layout-color2);
+}
+
+.mlflow-tab.active {
+  border-bottom-color: var(--jp-brand-color1);
+  color: var(--jp-brand-color1);
+}
+
+.mlflow-tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mlflow-tree-view,
+.mlflow-list-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mlflow-tree-content,
+.mlflow-list-content {
+  flex: 1;
+  overflow: auto;
+  padding: 8px;
+}
+
+.mlflow-tree-node {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mlflow-tree-node:hover {
+  background: var(--jp-layout-color2);
+}
+
+.mlflow-tree-icon {
+  margin-right: 4px;
+  width: 16px;
+  text-align: center;
+}
+
+.mlflow-tree-label {
+  flex: 1;
+  font-size: 12px;
+}
+
+.mlflow-loading {
+  padding: 20px;
+  text-align: center;
+  color: var(--jp-content-font-color2);
+}
+
+.mlflow-error {
+  padding: 12px;
+  background: #f8d7da;
+  color: #721c24;
+  border-radius: 3px;
+  margin: 8px;
+  font-size: 12px;
+}
+
+.mlflow-error button {
+  margin-left: 8px;
+  padding: 4px 8px;
+  background: white;
+  border: 1px solid #721c24;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.mlflow-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.mlflow-table th {
+  background: var(--jp-layout-color2);
+  padding: 8px;
+  text-align: left;
+  border-bottom: 2px solid var(--jp-border-color1);
+  cursor: pointer;
+  user-select: none;
+}
+
+.mlflow-table th:hover {
+  background: var(--jp-layout-color3);
+}
+
+.mlflow-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--jp-border-color1);
+}
+
+.mlflow-table tr:hover {
+  background: var(--jp-layout-color2);
+}
+
+.mlflow-metric {
+  font-size: 11px;
+  color: var(--jp-content-font-color2);
+}
+
+.mlflow-version {
+  font-size: 11px;
+  padding: 2px 4px;
+  background: var(--jp-layout-color2);
+  border-radius: 2px;
+  margin: 2px 0;
+}
+
+.mlflow-context-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+.mlflow-context-menu {
+  position: fixed;
+  background: var(--jp-layout-color1);
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  min-width: 150px;
+}
+
+.mlflow-context-menu-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.mlflow-context-menu-item:hover {
+  background: var(--jp-layout-color2);
+}
+

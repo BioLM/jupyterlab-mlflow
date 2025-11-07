@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling>=1.5.0", "jupyterlab>=4.0.0,<5", "hatch-nodejs-version>=0.3.2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jupyterlab-mlflow"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+authors = [
+    { name = "JupyterLab MLflow Contributors", email = "" },
+]
+keywords = ["Jupyter", "JupyterLab", "JupyterLab Extension", "MLflow"]
+classifiers = [
+    "Framework :: Jupyter",
+    "Framework :: Jupyter :: JupyterLab",
+    "Framework :: Jupyter :: JupyterLab :: 4",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "jupyterlab>=4.0.0,<5",
+    "mlflow>=2.0.0",
+    "tornado>=6.0.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-jupyter[server]>=0.6.0",
+    "pytest-asyncio",
+    "pytest-cov",
+    "playwright",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/jupyterlab-mlflow"
+"Bug Tracker" = "https://github.com/yourusername/jupyterlab-mlflow/issues"
+Documentation = "https://github.com/yourusername/jupyterlab-mlflow#readme"
+Source = "https://github.com/yourusername/jupyterlab-mlflow"
+
+[tool.hatch.version]
+source = "nodejs"
+
+[tool.hatch.build.targets.sdist]
+artifacts = ["jupyterlab_mlflow/labextension"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"jupyterlab_mlflow/labextension" = "share/jupyter/labextensions/jupyterlab-mlflow"
+"jupyterlab_mlflow/schema" = "share/jupyter/labextensions/jupyterlab-mlflow/schema"
+"install.json" = "share/jupyter/labextensions/jupyterlab-mlflow/install.json"
+
+[tool.jupyter-releaser.options]
+version_cmd = "hatchling version"
+
+[tool.jupyter-releaser.hooks]
+before-build-npm = ["python -m pip install 'jupyterlab>=4.0.0,<5'", "jlpm", "jlpm build:prod"]
+before-build-python = ["jlpm clean:all"]
+
+[tool.check-wheel-contents]
+ignore = ["JupyterLab MLflow*"]
+

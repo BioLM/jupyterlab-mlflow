@@ -1,0 +1,12 @@
+{
+  "packageManager": "npm",
+  "baseUrl": ".",
+  "packageDir": ".",
+  "uninstall": {
+    "packages": ["jupyterlab-mlflow"]
+  },
+  "install": {
+    "packages": ["jupyterlab-mlflow"]
+  }
+}
+

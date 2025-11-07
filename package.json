@@ -1,0 +1,93 @@
+{
+  "name": "jupyterlab-mlflow",
+  "version": "0.1.0",
+  "description": "A JupyterLab extension for browsing MLflow experiments, runs, models, and artifacts",
+  "keywords": [
+    "jupyter",
+    "jupyterlab",
+    "jupyterlab-extension",
+    "mlflow"
+  ],
+  "homepage": "https://github.com/yourusername/jupyterlab-mlflow",
+  "bugs": {
+    "url": "https://github.com/yourusername/jupyterlab-mlflow/issues"
+  },
+  "license": "BSD-3-Clause",
+  "author": "",
+  "files": [
+    "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
+    "schema/**/*.json",
+    "style/**/*.css",
+    "style/icons/*.png"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "style": "style/index.css",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/jupyterlab-mlflow.git"
+  },
+  "scripts": {
+    "build": "jlpm build:lib && jlpm build:labextension:dev",
+    "build:prod": "jlpm clean && jlpm build:lib && jlpm build:labextension",
+    "build:labextension": "jupyter labextension build .",
+    "build:labextension:dev": "jupyter labextension build --development .",
+    "build:lib": "tsc",
+    "build:lib:watch": "tsc --watch",
+    "clean": "jlpm clean:lib",
+    "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
+    "clean:labextension": "rimraf jupyterlab_mlflow/labextension",
+    "clean:all": "jlpm clean:lib && jlpm clean:labextension",
+    "eslint": "eslint . --ext .ts,.tsx --fix",
+    "eslint:check": "eslint . --ext .ts,.tsx",
+    "prepack": "jlpm clean && jlpm build:prod",
+    "watch": "npm-run-all --parallel watch:src watch:labextension",
+    "watch:src": "tsc -w",
+    "watch:labextension": "jupyter labextension watch"
+  },
+  "dependencies": {
+    "@jupyterlab/application": "^4.0.0",
+    "@jupyterlab/apputils": "^4.0.0",
+    "@jupyterlab/coreutils": "^6.0.0",
+    "@jupyterlab/mainmenu": "^4.0.0",
+    "@jupyterlab/settingregistry": "^4.0.0",
+    "@jupyterlab/services": "^4.0.0",
+    "@jupyterlab/statedb": "^4.0.0",
+    "@jupyterlab/translation": "^4.0.0",
+    "@jupyterlab/ui-components": "^4.0.0",
+    "@lumino/algorithm": "^2.0.0",
+    "@lumino/commands": "^2.0.0",
+    "@lumino/coreutils": "^2.0.0",
+    "@lumino/disposable": "^2.0.0",
+    "@lumino/messaging": "^2.0.0",
+    "@lumino/signaling": "^2.0.0",
+    "@lumino/widgets": "^2.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@jupyterlab/builder": "^4.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-prettier": "^8.0.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.0.0",
+    "rimraf": "^5.0.0",
+    "npm-run-all": "^4.1.5",
+    "ts-loader": "^9.0.0",
+    "typescript": "~5.2.0",
+    "webpack": "^5.0.0",
+    "css-loader": "^6.0.0",
+    "style-loader": "^3.0.0"
+  },
+  "jupyterlab": {
+    "extension": true,
+    "outputDir": "jupyterlab_mlflow/labextension",
+    "schemaDir": "jupyterlab_mlflow/schema"
+  },
+  "logo": "static/logo.png"
+}
+

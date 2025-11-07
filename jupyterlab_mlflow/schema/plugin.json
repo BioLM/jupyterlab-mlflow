@@ -1,0 +1,17 @@
+{
+  "jupyter.lab.setting-icon": "mlflow:icon",
+  "jupyter.lab.setting-icon-label": "MLflow",
+  "title": "MLflow",
+  "description": "MLflow extension settings",
+  "type": "object",
+  "properties": {
+    "mlflowTrackingUri": {
+      "type": "string",
+      "title": "MLflow Tracking URI",
+      "description": "URI of the MLflow tracking server (e.g., http://localhost:5000). Leave empty to use MLFLOW_TRACKING_URI environment variable.",
+      "default": ""
+    }
+  },
+  "additionalProperties": false
+}
+

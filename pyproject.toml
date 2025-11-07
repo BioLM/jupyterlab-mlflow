@@ -11,7 +11,7 @@ dynamic = ["version"]
 authors = [
     { name = "JupyterLab MLflow Contributors", email = "" },
 ]
-keywords = ["Jupyter", "JupyterLab", "JupyterLab Extension", "MLflow"]
+keywords = ["Jupyter", "JupyterLab", "jupyterlab-extension", "MLflow"]
 classifiers = [
     "Framework :: Jupyter",
     "Framework :: Jupyter :: JupyterLab",

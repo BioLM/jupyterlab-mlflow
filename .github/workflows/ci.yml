@@ -44,7 +44,10 @@ jobs:
 
       - name: Build extension
         run: |
-          npm run build:prod
+          npm run clean:lib
+          npm run clean:labextension
+          npm run build:lib
+          python -m jupyter labextension build .
 
       - name: Install build dependencies
         run: |

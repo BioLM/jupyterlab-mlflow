@@ -94,6 +94,17 @@ export interface IConnectionTestResponse {
   experiment_count?: number;
 }
 
+export interface ILocalMLflowServerStatus {
+  running: boolean;
+  port?: number;
+  url?: string;
+  tracking_uri?: string;
+  artifact_uri?: string;
+  message?: string;
+  error?: string;
+  success?: boolean;
+}
+
 /**
  * MLflow API client
  */
@@ -296,6 +307,69 @@ export class MLflowClient {
    */
   async getModel(modelName: string): Promise<IModel> {
     return this.request<IModel>(`models/${encodeURIComponent(modelName)}`);
+  }
+
+  /**
+   * Get local MLflow server status
+   */
+  async getLocalServerStatus(): Promise<ILocalMLflowServerStatus> {
+    return this.request<ILocalMLflowServerStatus>('local-server');
+  }
+
+  /**
+   * Start local MLflow server
+   */
+  async startLocalServer(
+    port: number = 5000,
+    trackingUri: string = 'sqlite:///mlflow.db',
+    artifactUri?: string,
+    backendUri?: string
+  ): Promise<ILocalMLflowServerStatus> {
+    const url = this.getApiUrl('local-server');
+    const body = JSON.stringify({
+      port,
+      tracking_uri: trackingUri,
+      artifact_uri: artifactUri,
+      backend_uri: backendUri
+    });
+
+    const response = await ServerConnection.makeRequest(
+      url,
+      {
+        method: 'POST',
+        body
+      },
+      this._serverSettings
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: response.statusText }));
+      throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Stop local MLflow server
+   */
+  async stopLocalServer(): Promise<ILocalMLflowServerStatus> {
+    const url = this.getApiUrl('local-server');
+
+    const response = await ServerConnection.makeRequest(
+      url,
+      {
+        method: 'DELETE'
+      },
+      this._serverSettings
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: response.statusText }));
+      throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
   }
 }
 

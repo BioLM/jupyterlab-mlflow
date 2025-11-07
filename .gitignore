@@ -62,3 +62,6 @@ htmlcov/
 # Build artifacts
 *.log
 
+# MLflow local data
+mlruns/
+

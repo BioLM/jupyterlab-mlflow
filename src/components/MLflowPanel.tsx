@@ -10,7 +10,7 @@ import { Widget } from '@lumino/widgets';
 import { MLflowSettings } from '../settings';
 import { MLflowClient } from '../mlflow';
 import { TreeView } from './TreeView';
-import { ListView } from './ListView';
+import { DetailsView } from './DetailsView';
 import { SettingsPanel } from './SettingsPanel';
 import { ShortcutsPanel } from './ShortcutsPanel';
 import '../../style/index.css';
@@ -18,7 +18,7 @@ import '../../style/index.css';
 /**
  * View mode
  */
-type ViewMode = 'tree' | 'list' | 'shortcuts';
+type ViewMode = 'tree' | 'details' | 'shortcuts';
 
 /**
  * Main MLflow panel props
@@ -45,6 +45,7 @@ export function MLflowPanel(props: IMLflowPanelProps): JSX.Element {
   const [viewMode, setViewMode] = useState<ViewMode>('tree');
   const [showSettings, setShowSettings] = useState(false);
   const [trackingUri, setTrackingUri] = useState<string>('');
+  const [detailsSelection, setDetailsSelection] = useState<{ type: 'experiment' | 'run' | 'artifact' | 'model' | 'version'; id: string; data?: any } | null>(null);
 
   useEffect(() => {
     // Load tracking URI from settings
@@ -52,6 +53,9 @@ export function MLflowPanel(props: IMLflowPanelProps): JSX.Element {
       setTrackingUri(uri);
       if (uri) {
         mlflowClient.setTrackingUri(uri);
+      } else {
+        // Automatically show settings panel if no tracking URI is configured
+        setShowSettings(true);
       }
     });
   }, [settings, mlflowClient]);
@@ -116,9 +120,12 @@ export function MLflowPanel(props: IMLflowPanelProps): JSX.Element {
             📁
           </button>
           <button
-            className={`mlflow-button ${viewMode === 'list' ? 'active' : ''}`}
-            onClick={() => setViewMode('list')}
-            title="List View"
+            className={`mlflow-button ${viewMode === 'details' ? 'active' : ''}`}
+            onClick={() => {
+              setViewMode('details');
+              setDetailsSelection(null);
+            }}
+            title="Details View"
           >
             📋
           </button>
@@ -160,9 +167,24 @@ export function MLflowPanel(props: IMLflowPanelProps): JSX.Element {
 
       <div className="mlflow-panel-content">
         {viewMode === 'tree' ? (
-          <TreeView mlflowClient={mlflowClient} />
-        ) : viewMode === 'list' ? (
-          <ListView mlflowClient={mlflowClient} />
+          <TreeView 
+            mlflowClient={mlflowClient} 
+            onOpenObject={(type, id, data) => {
+              setViewMode('details');
+              setDetailsSelection({ type, id, data });
+            }}
+          />
+        ) : viewMode === 'details' ? (
+          <DetailsView 
+            mlflowClient={mlflowClient}
+            app={app}
+            initialSelection={detailsSelection || undefined}
+            onObjectSelect={(type, id) => {
+              if (type) {
+                setDetailsSelection({ type, id });
+              }
+            }}
+          />
         ) : (
           <ShortcutsPanel app={app} />
         )}

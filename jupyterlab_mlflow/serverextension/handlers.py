@@ -12,6 +12,7 @@ from mlflow.tracking import MlflowClient
 from mlflow.exceptions import MlflowException
 from tornado import web
 from tornado.web import RequestHandler
+from .mlflow_server import start_mlflow_server, stop_mlflow_server, get_mlflow_server_status
 
 
 def get_mlflow_client(tracking_uri: Optional[str] = None) -> MlflowClient:
@@ -430,6 +431,63 @@ class ConnectionTestHandler(MLflowBaseHandler):
             })
 
 
+class LocalMLflowServerHandler(MLflowBaseHandler):
+    """Handler for managing local MLflow server"""
+    
+    def get(self):
+        """Get status of local MLflow server"""
+        try:
+            status = get_mlflow_server_status()
+            self.write(status)
+        except Exception as e:
+            self.set_status(500)
+            self.write({
+                "success": False,
+                "error": str(e)
+            })
+    
+    def post(self):
+        """Start local MLflow server"""
+        try:
+            body = json.loads(self.request.body.decode("utf-8"))
+            port = body.get("port", 5000)
+            tracking_uri = body.get("tracking_uri", "sqlite:///mlflow.db")
+            artifact_uri = body.get("artifact_uri")
+            backend_uri = body.get("backend_uri")
+            
+            result = start_mlflow_server(
+                port=port,
+                tracking_uri=tracking_uri,
+                artifact_uri=artifact_uri,
+                backend_uri=backend_uri
+            )
+            
+            if not result.get("success"):
+                self.set_status(500)
+            
+            self.write(result)
+        except Exception as e:
+            self.set_status(500)
+            self.write({
+                "success": False,
+                "error": str(e)
+            })
+    
+    def delete(self):
+        """Stop local MLflow server"""
+        try:
+            result = stop_mlflow_server()
+            if not result.get("success"):
+                self.set_status(500)
+            self.write(result)
+        except Exception as e:
+            self.set_status(500)
+            self.write({
+                "success": False,
+                "error": str(e)
+            })
+
+
 def setup_handlers(web_app):
     """Setup API handlers"""
     host_pattern = ".*$"
@@ -446,6 +504,7 @@ def setup_handlers(web_app):
         (f"{base_url}mlflow/api/models", ModelsHandler),
         (f"{base_url}mlflow/api/models/([^/]+)", ModelHandler),
         (f"{base_url}mlflow/api/connection/test", ConnectionTestHandler),
+        (f"{base_url}mlflow/api/local-server", LocalMLflowServerHandler),
     ]
     
     web_app.add_handlers(host_pattern, handlers)

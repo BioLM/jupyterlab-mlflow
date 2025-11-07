@@ -4,20 +4,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { MLflowClient } from '../mlflow';
-import { copyExperimentId, copyRunId, copyModelName, copyCode } from '../utils/copy';
 import { ContentsManager } from '@jupyterlab/services';
-import {
-  generateLoadModelCode,
-  generateGetRunCode,
-  generateGetExperimentCode,
-  generateDownloadArtifactCode,
-  generateLoadModelFromRunCode,
-  generateSearchRunsCode,
-  generateLoadArtifactAsTextCode,
-  generateLoadArtifactAsJsonCode,
-  generateLoadArtifactAsDataFrameCode,
-  generateLoadArtifactAsImageCode
-} from '../utils/codegen';
+import { truncateId } from '../utils/format';
 import { openArtifact } from './ArtifactViewer';
 
 /**
@@ -43,19 +31,19 @@ interface ITreeNode {
  */
 interface ITreeViewProps {
   mlflowClient: MLflowClient;
+  onOpenObject?: (type: 'experiment' | 'run' | 'artifact' | 'model' | 'version', id: string, data?: any) => void;
 }
 
 /**
  * Tree view component
  */
 export function TreeView(props: ITreeViewProps): JSX.Element {
-  const { mlflowClient } = props;
+  const { mlflowClient, onOpenObject } = props;
   const [experiments, setExperiments] = useState<ITreeNode[]>([]);
   const [models, setModels] = useState<ITreeNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'experiments' | 'models'>('experiments');
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: ITreeNode } | null>(null);
 
   // Load experiments
   const loadExperiments = useCallback(async () => {
@@ -216,30 +204,23 @@ export function TreeView(props: ITreeViewProps): JSX.Element {
     }
   };
 
-  // Handle context menu
-  const handleContextMenu = (e: React.MouseEvent, node: ITreeNode) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setContextMenu({ x: e.clientX, y: e.clientY, node });
+  // Handle open button click
+  const handleOpen = (node: ITreeNode) => {
+    if (onOpenObject) {
+      if (node.type === 'experiment') {
+        onOpenObject('experiment', node.id, node.data);
+      } else if (node.type === 'run') {
+        onOpenObject('run', node.id, node.data);
+      } else if (node.type === 'model') {
+        onOpenObject('model', node.id, node.data);
+      } else if (node.type === 'version') {
+        onOpenObject('version', node.data.version, { ...node.data, modelName: node.data.modelName });
+      } else if (node.type === 'artifact') {
+        onOpenObject('artifact', node.data.path, node.data);
+      }
+    }
   };
 
-  // Handle copy ID
-  const handleCopy = async (node: ITreeNode) => {
-    let success = false;
-    if (node.type === 'experiment') {
-      success = await copyExperimentId(node.id);
-    } else if (node.type === 'run') {
-      success = await copyRunId(node.id);
-    } else if (node.type === 'model') {
-      success = await copyModelName(node.id);
-    }
-    
-    if (success) {
-      // Toast notification is handled by copyCode function
-    }
-    
-    setContextMenu(null);
-  };
 
   // Handle download artifact - save to JupyterLab working directory
   const handleDownloadArtifact = async (node: ITreeNode) => {
@@ -294,52 +275,6 @@ export function TreeView(props: ITreeViewProps): JSX.Element {
   };
 
 
-  // Handle copy code
-  const handleCopyCode = async (node: ITreeNode, codeType: string) => {
-    let code = '';
-    
-    if (node.type === 'model') {
-      if (codeType === 'load') {
-        const version = node.data?.latest_versions?.[0]?.version;
-        const stage = node.data?.latest_versions?.[0]?.stage;
-        code = generateLoadModelCode(node.data.name, version, stage);
-      }
-    } else if (node.type === 'run') {
-      if (codeType === 'get') {
-        code = generateGetRunCode(node.data.run_id);
-      } else if (codeType === 'load-model') {
-        code = generateLoadModelFromRunCode(node.data.run_id);
-      }
-    } else if (node.type === 'experiment') {
-      if (codeType === 'get') {
-        code = generateGetExperimentCode(node.data.experiment_id);
-      } else if (codeType === 'search') {
-        code = generateSearchRunsCode(node.data.experiment_id);
-      }
-    } else if (node.type === 'artifact') {
-      const runId = node.data.runId || node.id.split('/')[0];
-      const artifactPath = node.data.path || node.label;
-      const extension = artifactPath.split('.').pop()?.toLowerCase() || '';
-      
-      if (codeType === 'download') {
-        code = generateDownloadArtifactCode(runId, artifactPath);
-      } else if (codeType === 'text') {
-        code = generateLoadArtifactAsTextCode(runId, artifactPath);
-      } else if (codeType === 'json' && extension === 'json') {
-        code = generateLoadArtifactAsJsonCode(runId, artifactPath);
-      } else if (codeType === 'dataframe' && (extension === 'csv' || extension === 'tsv')) {
-        code = generateLoadArtifactAsDataFrameCode(runId, artifactPath);
-      } else if (codeType === 'image' && ['png', 'jpg', 'jpeg', 'gif'].includes(extension)) {
-        code = generateLoadArtifactAsImageCode(runId, artifactPath);
-      }
-    }
-    
-    if (code) {
-      await copyCode(code);
-    }
-    
-    setContextMenu(null);
-  };
 
   // Render tree node
   const renderTreeNode = (
@@ -388,7 +323,6 @@ export function TreeView(props: ITreeViewProps): JSX.Element {
           className="mlflow-tree-node"
           style={{ paddingLeft: `${indent}px` }}
           onClick={() => handleNodeClick(node, parentNodes, setNodes)}
-          onContextMenu={(e) => handleContextMenu(e, node)}
         >
           <span 
             className="mlflow-tree-icon"
@@ -405,8 +339,15 @@ export function TreeView(props: ITreeViewProps): JSX.Element {
           >
             {icon || ' '}
           </span>
-          {node.loading && <span className="mlflow-loading">⏳</span>}
-          <span className="mlflow-tree-label">{node.label}</span>
+          <span className="mlflow-loading-container">
+            {node.loading && <span className="mlflow-loading">⏳</span>}
+          </span>
+          <span 
+            className="mlflow-tree-label" 
+            title={node.type === 'run' ? node.id : node.label}
+          >
+            {node.type === 'run' && node.id.length > 20 ? truncateId(node.label) : node.label}
+          </span>
           <div style={{ display: 'flex', gap: '2px', marginLeft: '4px', alignItems: 'center' }}>
             {isArtifactFile && (
               <button
@@ -427,29 +368,22 @@ export function TreeView(props: ITreeViewProps): JSX.Element {
                 ⬇
               </button>
             )}
-            {(node.type === 'model' || node.type === 'run' || node.type === 'experiment' || node.type === 'artifact') && (
+            {(node.type === 'model' || node.type === 'run' || node.type === 'experiment' || node.type === 'version') && (
               <button
-                className="mlflow-code-button"
+                className="mlflow-open-button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (node.type === 'model') {
-                    handleCopyCode(node, 'load');
-                  } else if (node.type === 'run') {
-                    handleCopyCode(node, 'get');
-                  } else if (node.type === 'experiment') {
-                    handleCopyCode(node, 'get');
-                  } else if (node.type === 'artifact') {
-                    handleCopyCode(node, 'download');
-                  }
+                  handleOpen(node);
                 }}
-                title={
-                  node.type === 'model' ? 'Copy code: Load model' :
-                  node.type === 'run' ? 'Copy code: Get run' :
-                  node.type === 'experiment' ? 'Copy code: Get experiment' :
-                  'Copy code: Download artifact'
-                }
+                title="Open in Details View"
+                style={{ 
+                  fontSize: '11px', 
+                  padding: '2px 6px',
+                  opacity: 0.7,
+                  cursor: 'pointer'
+                }}
               >
-                &lt;/&gt;
+                Open
               </button>
             )}
           </div>
@@ -503,127 +437,6 @@ export function TreeView(props: ITreeViewProps): JSX.Element {
         </div>
       )}
 
-      {contextMenu && (
-        <>
-          <div
-            className="mlflow-context-menu-overlay"
-            onClick={() => setContextMenu(null)}
-          />
-          <div
-            className="mlflow-context-menu"
-            style={{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }}
-          >
-            {contextMenu.node.type === 'model' && (
-              <>
-                <div
-                  className="mlflow-context-menu-item"
-                  onClick={() => handleCopyCode(contextMenu.node, 'load')}
-                >
-                  Copy code: Load model
-                </div>
-                <div
-                  className="mlflow-context-menu-item"
-                  onClick={() => handleCopy(contextMenu.node)}
-                >
-                  Copy model name
-                </div>
-              </>
-            )}
-            {contextMenu.node.type === 'run' && (
-              <>
-                <div
-                  className="mlflow-context-menu-item"
-                  onClick={() => handleCopyCode(contextMenu.node, 'get')}
-                >
-                  Copy code: Get run
-                </div>
-                <div
-                  className="mlflow-context-menu-item"
-                  onClick={() => handleCopyCode(contextMenu.node, 'load-model')}
-                >
-                  Copy code: Load model from run
-                </div>
-                <div
-                  className="mlflow-context-menu-item"
-                  onClick={() => handleCopy(contextMenu.node)}
-                >
-                  Copy run ID
-                </div>
-              </>
-            )}
-            {contextMenu.node.type === 'experiment' && (
-              <>
-                <div
-                  className="mlflow-context-menu-item"
-                  onClick={() => handleCopyCode(contextMenu.node, 'get')}
-                >
-                  Copy code: Get experiment
-                </div>
-                <div
-                  className="mlflow-context-menu-item"
-                  onClick={() => handleCopyCode(contextMenu.node, 'search')}
-                >
-                  Copy code: Search runs
-                </div>
-                <div
-                  className="mlflow-context-menu-item"
-                  onClick={() => handleCopy(contextMenu.node)}
-                >
-                  Copy experiment ID
-                </div>
-              </>
-            )}
-            {contextMenu.node.type === 'artifact' && (
-              <>
-                <div
-                  className="mlflow-context-menu-item"
-                  onClick={() => handleCopyCode(contextMenu.node, 'download')}
-                >
-                  Copy code: Download artifact
-                </div>
-                <div
-                  className="mlflow-context-menu-item"
-                  onClick={() => handleCopyCode(contextMenu.node, 'text')}
-                >
-                  Copy code: Load as text
-                </div>
-                {contextMenu.node.data?.path?.endsWith('.json') && (
-                  <div
-                    className="mlflow-context-menu-item"
-                    onClick={() => handleCopyCode(contextMenu.node, 'json')}
-                  >
-                    Copy code: Load as JSON
-                  </div>
-                )}
-                {(contextMenu.node.data?.path?.endsWith('.csv') || contextMenu.node.data?.path?.endsWith('.tsv')) && (
-                  <div
-                    className="mlflow-context-menu-item"
-                    onClick={() => handleCopyCode(contextMenu.node, 'dataframe')}
-                  >
-                    Copy code: Load as DataFrame
-                  </div>
-                )}
-                {['png', 'jpg', 'jpeg', 'gif'].some(ext => contextMenu.node.data?.path?.endsWith(`.${ext}`)) && (
-                  <div
-                    className="mlflow-context-menu-item"
-                    onClick={() => handleCopyCode(contextMenu.node, 'image')}
-                  >
-                    Copy code: Load as image
-                  </div>
-                )}
-              </>
-            )}
-            {contextMenu.node.type === 'version' && (
-              <div
-                className="mlflow-context-menu-item"
-                onClick={() => handleCopy(contextMenu.node)}
-              >
-                Copy version
-              </div>
-            )}
-          </div>
-        </>
-      )}
     </div>
   );
 }

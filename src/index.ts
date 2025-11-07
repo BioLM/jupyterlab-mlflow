@@ -6,12 +6,13 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
-import { ICommandPalette, IFrame, MainAreaWidget } from '@jupyterlab/apputils';
+import { ICommandPalette, MainAreaWidget } from '@jupyterlab/apputils';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { IMainMenu } from '@jupyterlab/mainmenu';
 import { ITranslator } from '@jupyterlab/translation';
 import { ServerConnection } from '@jupyterlab/services';
 import { LabIcon } from '@jupyterlab/ui-components';
+import { Widget } from '@lumino/widgets';
 
 import { MLflowWidget } from './widget';
 import { MLflowSettings } from './settings';
@@ -115,18 +116,25 @@ const plugin: JupyterFrontEndPlugin<void> = {
         // Construct MLflow UI URL
         const mlflowUIUrl = trackingUri.replace(/\/$/, '');
         
-        // Create IFrame widget
-        const iframe = new IFrame({
-          sandbox: ['allow-same-origin', 'allow-scripts', 'allow-popups', 'allow-forms'],
-          referrerPolicy: 'no-referrer'
-        });
-        iframe.url = mlflowUIUrl;
-        iframe.title.label = 'MLflow UI';
-        iframe.title.icon = mlflowIcon;
-        iframe.title.closable = true;
+        // Create container widget with header bar and iframe
+        const container = new Widget();
+        container.addClass('mlflow-iframe-container');
+        container.node.innerHTML = `
+          <div class="mlflow-iframe-header">
+            <a href="${mlflowUIUrl}" target="_blank" rel="noopener noreferrer" 
+               class="mlflow-pop-out-link" title="Open MLflow UI in new browser tab">
+              🔗 Open in new tab
+            </a>
+          </div>
+          <iframe src="${mlflowUIUrl}" 
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                  class="mlflow-iframe"
+                  referrerpolicy="no-referrer">
+          </iframe>
+        `;
 
         // Create main area widget
-        const mainWidget = new MainAreaWidget({ content: iframe });
+        const mainWidget = new MainAreaWidget({ content: container });
         mainWidget.id = 'mlflow-ui-widget';
         mainWidget.title.label = 'MLflow UI';
         mainWidget.title.icon = mlflowIcon;

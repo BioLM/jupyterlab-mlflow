@@ -4,19 +4,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { JupyterFrontEnd } from '@jupyterlab/application';
-import { IFrame, MainAreaWidget } from '@jupyterlab/apputils';
+import { MainAreaWidget } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
+import { Widget } from '@lumino/widgets';
 import { MLflowSettings } from '../settings';
 import { MLflowClient } from '../mlflow';
 import { TreeView } from './TreeView';
 import { ListView } from './ListView';
 import { SettingsPanel } from './SettingsPanel';
+import { ShortcutsPanel } from './ShortcutsPanel';
 import '../../style/index.css';
 
 /**
  * View mode
  */
-type ViewMode = 'tree' | 'list';
+type ViewMode = 'tree' | 'list' | 'shortcuts';
 
 /**
  * Main MLflow panel props
@@ -73,18 +75,25 @@ export function MLflowPanel(props: IMLflowPanelProps): JSX.Element {
     // Construct MLflow UI URL (remove trailing slash if present)
     const mlflowUIUrl = uri.replace(/\/$/, '');
     
-    // Create IFrame widget
-    const iframe = new IFrame({
-      sandbox: ['allow-same-origin', 'allow-scripts', 'allow-popups', 'allow-forms'],
-      referrerPolicy: 'no-referrer'
-    });
-    iframe.url = mlflowUIUrl;
-    iframe.title.label = 'MLflow UI';
-    iframe.title.icon = mlflowIcon;
-    iframe.title.closable = true;
+    // Create container widget with header bar and iframe
+    const container = new Widget();
+    container.addClass('mlflow-iframe-container');
+    container.node.innerHTML = `
+      <div class="mlflow-iframe-header">
+        <a href="${mlflowUIUrl}" target="_blank" rel="noopener noreferrer" 
+           class="mlflow-pop-out-link" title="Open MLflow UI in new browser tab">
+          🔗 Open in new tab
+        </a>
+      </div>
+      <iframe src="${mlflowUIUrl}" 
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+              class="mlflow-iframe"
+              referrerpolicy="no-referrer">
+      </iframe>
+    `;
 
     // Create main area widget
-    const mainWidget = new MainAreaWidget({ content: iframe });
+    const mainWidget = new MainAreaWidget({ content: container });
     mainWidget.id = 'mlflow-ui-widget';
     mainWidget.title.label = 'MLflow UI';
     mainWidget.title.icon = mlflowIcon;
@@ -112,6 +121,13 @@ export function MLflowPanel(props: IMLflowPanelProps): JSX.Element {
             title="List View"
           >
             📋
+          </button>
+          <button
+            className={`mlflow-button ${viewMode === 'shortcuts' ? 'active' : ''}`}
+            onClick={() => setViewMode('shortcuts')}
+            title="MLflow Shortcuts"
+          >
+            ⚡
           </button>
           <button
             className="mlflow-button"
@@ -145,8 +161,10 @@ export function MLflowPanel(props: IMLflowPanelProps): JSX.Element {
       <div className="mlflow-panel-content">
         {viewMode === 'tree' ? (
           <TreeView mlflowClient={mlflowClient} />
-        ) : (
+        ) : viewMode === 'list' ? (
           <ListView mlflowClient={mlflowClient} />
+        ) : (
+          <ShortcutsPanel app={app} />
         )}
       </div>
     </div>

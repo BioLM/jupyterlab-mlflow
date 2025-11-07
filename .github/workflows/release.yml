@@ -9,7 +9,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # Required to push version bumps and tags
+      issues: write # Required for semantic-release to access repository
+      pull-requests: write # Required for semantic-release to access repository
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

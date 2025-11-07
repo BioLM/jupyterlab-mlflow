@@ -70,22 +70,33 @@ pytest
 
 ## Publishing
 
-This package is automatically published to PyPI when a new release is created on GitHub.
+This package uses automatic version bumping and is published to PyPI when a new release is created on GitHub.
 
-### Setting Up Automated Publishing
+### Automatic Version Bumping
 
-1. **Configure PyPI Trusted Publishing:**
-   - Go to https://pypi.org/manage/project/jupyterlab-mlflow/settings/publishing/
-   - Add a trusted publisher with:
-     - Owner: `BioLM`
-     - Repository: `jupyterlab-mlflow`
-     - Workflow name: `publish.yml`
+Version bumping is handled automatically by `semantic-release` based on commit messages:
 
-2. **Create a GitHub Release:**
-   - Update version in `package.json`
-   - Tag and push: `git tag v0.1.0 && git push origin v0.1.0`
-   - Create a release on GitHub with the same tag
-   - The workflow will automatically build and publish to PyPI
+- `feat: something` → minor version bump (0.1.0 → 0.2.0)
+- `fix: something` → patch version bump (0.1.0 → 0.1.1)
+- `BREAKING: something` → major version bump (0.1.0 → 1.0.0)
+
+When you push to `main`, semantic-release will:
+1. Analyze commits since last release
+2. Bump version in `package.json` (if needed)
+3. Create a git tag
+4. Push the tag to GitHub
+
+### Publishing to PyPI
+
+1. **Create a GitHub Release:**
+   - Go to: https://github.com/BioLM/jupyterlab-mlflow/releases/new
+   - Select the tag created by semantic-release (e.g., `v0.2.0`)
+   - Add release notes
+   - Click "Publish release"
+
+2. **Automatic Publishing:**
+   - The publish workflow automatically builds and publishes to PyPI
+   - No manual steps required after creating the release
 
 See [PUBLISHING.md](PUBLISHING.md) for detailed instructions.
 

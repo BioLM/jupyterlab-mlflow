@@ -93,10 +93,45 @@ If you need to publish manually:
 
 - Version is managed in `package.json` under the `version` field
 - Python version is automatically synced via `hatch-nodejs-version` (configured in `pyproject.toml`)
-- Follow [Semantic Versioning](https://semver.org/):
-  - **MAJOR**: Breaking changes
-  - **MINOR**: New features (backward compatible)
-  - **PATCH**: Bug fixes (backward compatible)
+- **Automatic version bumping** is handled by `semantic-release` based on commit messages
+- Follow [Semantic Versioning](https://semver.org/) and [Conventional Commits](https://www.conventionalcommits.org/):
+  - **MAJOR**: Breaking changes (`BREAKING:` in commit message)
+  - **MINOR**: New features (`feat:` prefix in commit message)
+  - **PATCH**: Bug fixes (`fix:` prefix in commit message)
+
+### Commit Message Format
+
+For automatic version bumping, use conventional commit messages:
+
+- `feat: add new feature` → minor version bump (0.1.0 → 0.2.0)
+- `fix: bug fix` → patch version bump (0.1.0 → 0.1.1)
+- `BREAKING: major change` → major version bump (0.1.0 → 1.0.0)
+- Regular commits without prefixes → no version bump
+
+### Automatic Version Bumping Workflow
+
+1. **Commit with conventional format**:
+   ```bash
+   git commit -m "feat: add new MLflow feature"
+   git push origin main
+   ```
+
+2. **semantic-release automatically**:
+   - Analyzes commits since last release
+   - Bumps version in `package.json` (if needed)
+   - Creates git tag (e.g., `v0.2.0`)
+   - Commits the version change
+   - Pushes tag to GitHub
+
+3. **You manually create GitHub release**:
+   - Go to: https://github.com/BioLM/jupyterlab-mlflow/releases/new
+   - Select the tag created by semantic-release
+   - Add release notes
+   - Click "Publish release"
+
+4. **Publish workflow automatically runs**:
+   - Builds the package
+   - Publishes to PyPI
 
 ## Troubleshooting
 

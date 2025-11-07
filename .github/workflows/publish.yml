@@ -51,9 +51,33 @@ jobs:
           path: dist/
           retention-days: 7
 
-  publish:
+  publish-testpypi:
     runs-on: ubuntu-latest
     needs: build
+    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.repository == 'testpypi' || github.event.inputs.repository == '') || github.event_name == 'release' && contains(github.event.release.tag_name, 'rc')
+    environment:
+      name: testpypi
+    permissions:
+      id-token: write  # Required for TestPyPI trusted publishing
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          repository-url: https://test.pypi.org/legacy/
+
+  publish-pypi:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'release' && !contains(github.event.release.tag_name, 'rc') || github.event_name == 'workflow_dispatch' && github.event.inputs.repository == 'pypi'
+    environment:
+      name: pypi
     permissions:
       id-token: write  # Required for PyPI trusted publishing
     steps:

@@ -68,6 +68,50 @@ You should see `jupyterlab_mlflow.serverextension` in the enabled extensions lis
 
 **Note**: In some JupyterLab deployments (especially managed environments), the server extension may need to be enabled by an administrator or configured in the deployment settings.
 
+### Troubleshooting
+
+If you're experiencing 404 errors when using the extension:
+
+1. **Run the diagnostic script**:
+   ```bash
+   python scripts/diagnose_extension.py
+   ```
+   This will check:
+   - Package installation
+   - Entry point discovery
+   - Configuration files
+   - Extension status
+   - Handler registration
+
+2. **Check if the extension is enabled**:
+   ```bash
+   jupyter server extension list | grep mlflow
+   ```
+   If it's not listed or not enabled, enable it:
+   ```bash
+   jupyter server extension enable jupyterlab_mlflow.serverextension
+   ```
+
+3. **Verify the health endpoint**:
+   After starting JupyterLab, try accessing:
+   ```
+   http://your-jupyterlab-url/mlflow/api/health
+   ```
+   If this returns `{"status": "ok", ...}`, the extension is loaded correctly.
+
+4. **Check server logs**:
+   Look for messages like:
+   ```
+   ✅ Registered jupyterlab-mlflow server extension
+   ✅ Registered 11 API handlers with base_url: /jupyter/
+   ```
+
+5. **For managed deployments**:
+   - Ensure the package is installed in the correct Python environment
+   - Check that config files are present in `/etc/jupyter/` or the deployment's config directory
+   - Verify that entry points are discoverable (the diagnostic script checks this)
+   - Some managed environments require explicit enablement even with config files
+
 ## Usage
 
 1. Configure your MLflow tracking URI in the settings or via environment variable

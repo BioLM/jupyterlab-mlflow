@@ -20,3 +20,16 @@ def _jupyter_labextension_paths():
         'dest': 'jupyterlab-mlflow'
     }]
 
+
+# Also expose server extension functions at package level for compatibility
+def _jupyter_server_extension_points():
+    """Server extension points - also exposed here for compatibility"""
+    from .serverextension import _jupyter_server_extension_points as _points
+    return _points()
+
+
+def _load_jupyter_server_extension(server_app):
+    """Load server extension - also exposed here for compatibility"""
+    from .serverextension import _load_jupyter_server_extension as _load
+    return _load(server_app)
+

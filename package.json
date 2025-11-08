@@ -1,6 +1,6 @@
 {
   "name": "jupyterlab-mlflow",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "A JupyterLab extension for browsing MLflow experiments, runs, models, and artifacts",
   "keywords": [
     "jupyter",

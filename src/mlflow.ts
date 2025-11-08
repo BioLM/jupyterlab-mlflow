@@ -313,7 +313,24 @@ export class MLflowClient {
    * Get local MLflow server status
    */
   async getLocalServerStatus(): Promise<ILocalMLflowServerStatus> {
-    return this.request<ILocalMLflowServerStatus>('local-server');
+    // Don't add tracking_uri query param for local-server endpoint
+    const baseUrl = this._serverSettings.baseUrl;
+    const url = URLExt.join(baseUrl, 'mlflow', 'api', 'local-server');
+    
+    const response = await ServerConnection.makeRequest(
+      url,
+      {
+        method: 'GET'
+      },
+      this._serverSettings
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: response.statusText }));
+      throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
   }
 
   /**
@@ -325,7 +342,9 @@ export class MLflowClient {
     artifactUri?: string,
     backendUri?: string
   ): Promise<ILocalMLflowServerStatus> {
-    const url = this.getApiUrl('local-server');
+    // Don't add tracking_uri query param for local-server endpoint
+    const baseUrl = this._serverSettings.baseUrl;
+    const url = URLExt.join(baseUrl, 'mlflow', 'api', 'local-server');
     const body = JSON.stringify({
       port,
       tracking_uri: trackingUri,
@@ -337,7 +356,10 @@ export class MLflowClient {
       url,
       {
         method: 'POST',
-        body
+        body,
+        headers: {
+          'Content-Type': 'application/json'
+        }
       },
       this._serverSettings
     );
@@ -354,7 +376,9 @@ export class MLflowClient {
    * Stop local MLflow server
    */
   async stopLocalServer(): Promise<ILocalMLflowServerStatus> {
-    const url = this.getApiUrl('local-server');
+    // Don't add tracking_uri query param for local-server endpoint
+    const baseUrl = this._serverSettings.baseUrl;
+    const url = URLExt.join(baseUrl, 'mlflow', 'api', 'local-server');
 
     const response = await ServerConnection.makeRequest(
       url,

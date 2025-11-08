@@ -467,6 +467,17 @@ class LocalMLflowServerHandler(MLflowBaseHandler):
             artifact_uri = body.get("artifact_uri")
             backend_uri = body.get("backend_uri")
             
+            # Convert empty strings to None
+            if artifact_uri == "":
+                artifact_uri = None
+            if backend_uri == "":
+                backend_uri = None
+            
+            # Log the request for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"Starting local MLflow server: port={port}, tracking_uri={tracking_uri}, artifact_uri={artifact_uri}")
+            
             result = start_mlflow_server(
                 port=port,
                 tracking_uri=tracking_uri,
@@ -475,10 +486,22 @@ class LocalMLflowServerHandler(MLflowBaseHandler):
             )
             
             if not result.get("success"):
+                logger.error(f"Failed to start MLflow server: {result.get('error', 'Unknown error')}")
                 self.set_status(500)
+            else:
+                logger.info(f"Successfully started MLflow server: {result.get('url')}")
             
             self.write(result)
+        except json.JSONDecodeError as e:
+            self.set_status(400)
+            self.write({
+                "success": False,
+                "error": f"Invalid JSON in request body: {str(e)}"
+            })
         except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error starting local MLflow server: {e}", exc_info=True)
             self.set_status(500)
             self.write({
                 "success": False,

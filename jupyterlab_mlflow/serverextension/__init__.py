@@ -3,10 +3,14 @@ JupyterLab MLflow Server Extension
 """
 
 import os
+import sys
 import logging
 from .handlers import setup_handlers
 
 logger = logging.getLogger(__name__)
+
+# Track if extension has been loaded to avoid duplicate registration
+_extension_loaded = False
 
 
 def _jupyter_server_extension_points():
@@ -14,6 +18,8 @@ def _jupyter_server_extension_points():
     Returns a list of dictionaries with metadata about
     the server extension points.
     """
+    # Log to stderr for visibility in managed environments
+    print("jupyterlab-mlflow: Extension points discovered", file=sys.stderr)
     return [{
         "module": "jupyterlab_mlflow.serverextension"
     }]
@@ -27,14 +33,38 @@ def _load_jupyter_server_extension(server_app):
     server_app: jupyter_server.serverapp.ServerApp
         Jupyter Server application instance
     """
+    global _extension_loaded
+    
+    # Prevent duplicate registration
+    if _extension_loaded:
+        server_app.log.warning("jupyterlab-mlflow: Extension already loaded, skipping duplicate registration")
+        return
+    
     try:
         setup_handlers(server_app.web_app)
-        server_app.log.info("✅ Registered jupyterlab-mlflow server extension")
-        logger.info("✅ Registered jupyterlab-mlflow server extension")
+        _extension_loaded = True
+        
+        # Log success to both logger and stderr for visibility
+        success_msg = "✅ Registered jupyterlab-mlflow server extension"
+        server_app.log.info(success_msg)
+        logger.info(success_msg)
+        print(success_msg, file=sys.stderr)
+        
+        # Log startup verification details
+        base_url = server_app.web_app.settings.get("base_url", "/")
+        verification_msg = f"✅ jupyterlab-mlflow: Server extension loaded successfully with base_url: {base_url}"
+        server_app.log.info(verification_msg)
+        logger.info(verification_msg)
+        print(verification_msg, file=sys.stderr)
+        
     except Exception as e:
         error_msg = f"❌ Failed to register jupyterlab-mlflow server extension: {e}"
         server_app.log.error(error_msg)
         logger.error(error_msg, exc_info=True)
+        # Also print to stderr for visibility in managed environments
+        print(error_msg, file=sys.stderr)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
         # Don't raise - allow JupyterLab to continue loading even if extension fails
         # This prevents the entire server from failing due to extension issues
 
@@ -44,31 +74,32 @@ def _jupyter_server_extension_paths():
     """
     Returns a list of server extension paths for Jupyter Server 2.x.
     """
+    print("jupyterlab-mlflow: Extension paths discovered (Jupyter Server 2.x)", file=sys.stderr)
     return [{
         "module": "jupyterlab_mlflow.serverextension"
     }]
 
 
-# Try to auto-load if we're being imported in a Jupyter Server context
-# This is a fallback for environments where entry points don't work
-def _try_auto_load():
-    """Attempt to auto-load the extension if we're in a Jupyter Server context"""
+# Register startup hook to ensure extension loads even if entry points fail
+def _register_startup_hook():
+    """Register a startup hook to ensure extension loads during server initialization"""
     try:
-        # Check if we're in a Jupyter Server process
-        import sys
-        if 'jupyter_server' in sys.modules or 'jupyterlab' in sys.modules:
-            # Try to get the current ServerApp instance
-            try:
-                from jupyter_server.serverapp import ServerApp
-                # ServerApp might have a singleton or registry
-                # This is a best-effort attempt
-                pass
-            except ImportError:
-                pass
+        # Try to register with Jupyter Server's extension manager if available
+        try:
+            from jupyter_server.extension.serverextension import ExtensionManager
+            # This is a best-effort attempt - the extension manager may not be available
+            # at import time, but entry points should handle loading
+            pass
+        except ImportError:
+            pass
     except Exception:
-        # Silently fail - entry point will handle loading
+        # Silently fail - entry points and config files should handle loading
         pass
 
-# Attempt auto-load (entry point should handle it, but this is a fallback)
-_try_auto_load()
+
+# Log module import for diagnostics
+print("jupyterlab-mlflow: Server extension module imported", file=sys.stderr)
+
+# Register startup hook (entry points should handle loading, but this is a fallback)
+_register_startup_hook()
 

@@ -58,6 +58,8 @@ artifacts = ["jupyterlab_mlflow/labextension"]
 "jupyterlab_mlflow/labextension" = "share/jupyter/labextensions/jupyterlab-mlflow"
 "jupyterlab_mlflow/schema" = "share/jupyter/labextensions/jupyterlab-mlflow/schema"
 "install.json" = "share/jupyter/labextensions/jupyterlab-mlflow/install.json"
+"jupyter-config/jupyter_lab_config.d/jupyterlab-mlflow.json" = "etc/jupyter/jupyter_lab_config.d/jupyterlab-mlflow.json"
+"jupyter-config/jupyter_notebook_config.d/jupyterlab-mlflow.json" = "etc/jupyter/jupyter_notebook_config.d/jupyterlab-mlflow.json"
 
 [tool.jupyter-releaser.options]
 version_cmd = "hatchling version"

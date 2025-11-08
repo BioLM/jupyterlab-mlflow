@@ -38,6 +38,7 @@ jobs:
           npm run clean:labextension
           npm run build:lib
           python -m jupyter labextension build .
+          npm run copy:extension
 
       - name: Install build dependencies
         run: |

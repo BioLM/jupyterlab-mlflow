@@ -78,6 +78,43 @@ You should see `jupyterlab_mlflow.serverextension` in the enabled extensions lis
 
 ## Development
 
+### Quick Local Testing
+
+To test the extension locally without publishing to PyPI:
+
+```bash
+# Option 1: Use the test script (recommended)
+./test_server_extension.sh
+
+# Option 2: Manual steps
+pip install -e .
+npm run build:lib
+python -m jupyter labextension build . --dev
+jupyter server extension enable jupyterlab_mlflow.serverextension
+jupyter lab
+```
+
+### Testing API Endpoints
+
+After starting JupyterLab, test the server extension API endpoints:
+
+```bash
+# In another terminal, test the endpoints
+./test_api_endpoints.sh http://localhost:8888 http://localhost:5000
+```
+
+Or manually test with curl:
+
+```bash
+# Test connection endpoint
+curl "http://localhost:8888/mlflow/api/connection/test?tracking_uri=http://localhost:5000"
+
+# Test local server status
+curl "http://localhost:8888/mlflow/api/local-server"
+```
+
+### Development Workflow
+
 ```bash
 # Install dependencies
 jlpm install

@@ -37,6 +37,18 @@ def get_mlflow_client(tracking_uri: Optional[str] = None) -> MlflowClient:
     return MlflowClient()
 
 
+class HealthCheckHandler(RequestHandler):
+    """Handler for extension health check - helps diagnose loading issues"""
+    
+    def get(self):
+        """Return extension status"""
+        self.write({
+            "status": "ok",
+            "extension": "jupyterlab-mlflow",
+            "message": "Server extension is loaded and responding"
+        })
+
+
 class MLflowBaseHandler(RequestHandler):
     """Base handler for MLflow API endpoints"""
     
@@ -499,6 +511,9 @@ def setup_handlers(web_app):
     
     # Remove leading / from mlflow/api paths since base_url already includes it
     handlers = [
+        # Health check endpoint (for diagnosing loading issues)
+        (rf"{base_url}mlflow/api/health", HealthCheckHandler),
+        # Main API endpoints
         (rf"{base_url}mlflow/api/experiments", ExperimentsHandler),
         (rf"{base_url}mlflow/api/experiments/([^/]+)", ExperimentHandler),
         (rf"{base_url}mlflow/api/experiments/([^/]+)/runs", RunsHandler),
@@ -516,7 +531,11 @@ def setup_handlers(web_app):
     # Log registered handlers for debugging
     import logging
     logger = logging.getLogger(__name__)
-    logger.info(f"Registered jupyterlab-mlflow API handlers with base_url: {base_url}")
+    logger.info(f"✅ Registered jupyterlab-mlflow API handlers with base_url: {base_url}")
+    # Also print to stderr for visibility in managed environments
+    import sys
+    print(f"✅ jupyterlab-mlflow: Registered {len(handlers)} API handlers with base_url: {base_url}", file=sys.stderr)
     for pattern, handler in handlers:
         logger.debug(f"  - {pattern} -> {handler.__name__}")
+        print(f"  - {pattern} -> {handler.__name__}", file=sys.stderr)
 

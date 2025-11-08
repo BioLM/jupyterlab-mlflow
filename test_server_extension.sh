@@ -13,7 +13,7 @@ echo "📦 Step 1: Building extension..."
 npm run clean:lib
 npm run clean:labextension
 npm run build:lib
-npm run build:labextension:dev
+jupyter labextension build --development .
 echo "✅ Extension built"
 echo ""
 

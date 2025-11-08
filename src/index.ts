@@ -60,6 +60,28 @@ const plugin: JupyterFrontEndPlugin<void> = {
     const serverSettings = ServerConnection.makeSettings();
     const mlflowClient = new MLflowClient(serverSettings);
 
+    // Verify server extension is loaded by checking health endpoint
+    try {
+      const baseUrl = serverSettings.baseUrl;
+      const healthUrl = `${baseUrl}mlflow/api/health`;
+      const response = await ServerConnection.makeRequest(healthUrl, {}, serverSettings);
+      if (!response.ok) {
+        console.warn(
+          '⚠️ jupyterlab-mlflow: Server extension may not be loaded. ' +
+          'Health check returned status:', response.status,
+          '\nPlease ensure the server extension is enabled: ' +
+          'jupyter server extension enable jupyterlab_mlflow.serverextension'
+        );
+      }
+    } catch (error) {
+      console.error(
+        '❌ jupyterlab-mlflow: Server extension not loaded or not accessible. ' +
+        'Error checking health endpoint:', error,
+        '\nPlease ensure the server extension is enabled: ' +
+        'jupyter server extension enable jupyterlab_mlflow.serverextension'
+      );
+    }
+
     // Get tracking URI from settings
     const trackingUri = await settings.getTrackingUri();
     if (trackingUri) {

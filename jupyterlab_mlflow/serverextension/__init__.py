@@ -80,18 +80,35 @@ def _jupyter_server_extension_paths():
     }]
 
 
+# Aggressive loading mechanism: Try to hook into ServerApp initialization
+def _try_aggressive_load():
+    """Try to register extension handlers if we detect Jupyter Server is running"""
+    try:
+        # Check if we're in a Jupyter Server process by looking for ServerApp in sys.modules
+        if 'jupyter_server.serverapp' in sys.modules:
+            try:
+                from jupyter_server.serverapp import ServerApp
+                # Try to get the singleton instance if it exists
+                # This is a best-effort attempt - ServerApp may not be initialized yet
+                if hasattr(ServerApp, '_instance') and ServerApp._instance is not None:
+                    server_app = ServerApp._instance
+                    if not _extension_loaded and hasattr(server_app, 'web_app'):
+                        print("jupyterlab-mlflow: Attempting aggressive load via ServerApp singleton", file=sys.stderr)
+                        _load_jupyter_server_extension(server_app)
+            except (ImportError, AttributeError, TypeError):
+                pass
+    except Exception:
+        # Silently fail - entry points should handle loading
+        pass
+
+
 # Register startup hook to ensure extension loads even if entry points fail
 def _register_startup_hook():
     """Register a startup hook to ensure extension loads during server initialization"""
     try:
-        # Try to register with Jupyter Server's extension manager if available
-        try:
-            from jupyter_server.extension.serverextension import ExtensionManager
-            # This is a best-effort attempt - the extension manager may not be available
-            # at import time, but entry points should handle loading
-            pass
-        except ImportError:
-            pass
+        # Try to hook into Jupyter Server's initialization
+        # This is a best-effort attempt
+        _try_aggressive_load()
     except Exception:
         # Silently fail - entry points and config files should handle loading
         pass
@@ -102,4 +119,17 @@ print("jupyterlab-mlflow: Server extension module imported", file=sys.stderr)
 
 # Register startup hook (entry points should handle loading, but this is a fallback)
 _register_startup_hook()
+
+# Also try aggressive load after a short delay to catch ServerApp initialization
+# This is a last resort if entry points and config files fail
+try:
+    import threading
+    def delayed_load():
+        import time
+        time.sleep(0.5)  # Wait for ServerApp to initialize
+        _try_aggressive_load()
+    thread = threading.Thread(target=delayed_load, daemon=True)
+    thread.start()
+except Exception:
+    pass
 

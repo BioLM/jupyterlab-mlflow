@@ -44,6 +44,30 @@ The extension can be configured via:
 1. **Settings UI**: Open JupyterLab Settings → Advanced Settings Editor → MLflow
 2. **Environment Variable**: Set `MLFLOW_TRACKING_URI` environment variable
 
+### Server Extension
+
+The extension includes a server-side component that must be enabled. After installation, enable it with:
+
+```bash
+jupyter server extension enable jupyterlab_mlflow.serverextension
+```
+
+Or enable it system-wide:
+
+```bash
+jupyter server extension enable jupyterlab_mlflow.serverextension --sys-prefix
+```
+
+Verify it's enabled:
+
+```bash
+jupyter server extension list
+```
+
+You should see `jupyterlab_mlflow.serverextension` in the enabled extensions list.
+
+**Note**: In some JupyterLab deployments (especially managed environments), the server extension may need to be enabled by an administrator or configured in the deployment settings.
+
 ## Usage
 
 1. Configure your MLflow tracking URI in the settings or via environment variable

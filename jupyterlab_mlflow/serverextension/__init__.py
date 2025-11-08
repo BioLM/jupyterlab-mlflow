@@ -27,3 +27,13 @@ def _load_jupyter_server_extension(server_app):
     setup_handlers(server_app.web_app)
     server_app.log.info("Registered jupyterlab-mlflow server extension")
 
+
+# For Jupyter Server 2.x compatibility
+def _jupyter_server_extension_paths():
+    """
+    Returns a list of server extension paths for Jupyter Server 2.x.
+    """
+    return [{
+        "module": "jupyterlab_mlflow.serverextension"
+    }]
+

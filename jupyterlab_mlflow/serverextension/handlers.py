@@ -493,19 +493,30 @@ def setup_handlers(web_app):
     host_pattern = ".*$"
     
     base_url = web_app.settings.get("base_url", "/")
+    # Ensure base_url ends with / for proper path joining
+    if not base_url.endswith("/"):
+        base_url = base_url + "/"
     
+    # Remove leading / from mlflow/api paths since base_url already includes it
     handlers = [
-        (f"{base_url}mlflow/api/experiments", ExperimentsHandler),
-        (f"{base_url}mlflow/api/experiments/([^/]+)", ExperimentHandler),
-        (f"{base_url}mlflow/api/experiments/([^/]+)/runs", RunsHandler),
-        (f"{base_url}mlflow/api/runs/([^/]+)", RunHandler),
-        (f"{base_url}mlflow/api/runs/([^/]+)/artifacts", ArtifactsHandler),
-        (f"{base_url}mlflow/api/runs/([^/]+)/artifacts/download", ArtifactDownloadHandler),
-        (f"{base_url}mlflow/api/models", ModelsHandler),
-        (f"{base_url}mlflow/api/models/([^/]+)", ModelHandler),
-        (f"{base_url}mlflow/api/connection/test", ConnectionTestHandler),
-        (f"{base_url}mlflow/api/local-server", LocalMLflowServerHandler),
+        (rf"{base_url}mlflow/api/experiments", ExperimentsHandler),
+        (rf"{base_url}mlflow/api/experiments/([^/]+)", ExperimentHandler),
+        (rf"{base_url}mlflow/api/experiments/([^/]+)/runs", RunsHandler),
+        (rf"{base_url}mlflow/api/runs/([^/]+)", RunHandler),
+        (rf"{base_url}mlflow/api/runs/([^/]+)/artifacts", ArtifactsHandler),
+        (rf"{base_url}mlflow/api/runs/([^/]+)/artifacts/download", ArtifactDownloadHandler),
+        (rf"{base_url}mlflow/api/models", ModelsHandler),
+        (rf"{base_url}mlflow/api/models/([^/]+)", ModelHandler),
+        (rf"{base_url}mlflow/api/connection/test", ConnectionTestHandler),
+        (rf"{base_url}mlflow/api/local-server", LocalMLflowServerHandler),
     ]
     
     web_app.add_handlers(host_pattern, handlers)
+    
+    # Log registered handlers for debugging
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Registered jupyterlab-mlflow API handlers with base_url: {base_url}")
+    for pattern, handler in handlers:
+        logger.debug(f"  - {pattern} -> {handler.__name__}")
 

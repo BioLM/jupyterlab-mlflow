@@ -9,7 +9,14 @@
         "npmPublish": false
       }
     ],
-    "@semantic-release/github",
+    [
+      "@semantic-release/github",
+      {
+        "successComment": false,
+        "releasedLabels": false,
+        "addReleases": false
+      }
+    ],
     [
       "@semantic-release/git",
       {

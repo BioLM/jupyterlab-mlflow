@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  jupyterlab:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: jupyterlab-mlflow-test
+    ports:
+      - "8889:8888"
+    volumes:
+      - ./e2e_test/work:/home/jovyan/work
+      - ./e2e_test/mlruns:/home/jovyan/mlruns
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/lab"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  # Optional: MLflow server for testing
+  mlflow:
+    image: python:3.11-slim
+    container_name: mlflow-test-server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./e2e_test/mlruns:/mlruns
+    working_dir: /mlruns
+    command: >
+      sh -c "pip install --no-cache-dir mlflow &&
+             mlflow ui --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge
+

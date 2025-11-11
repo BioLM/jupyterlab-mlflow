@@ -1,0 +1,19 @@
+# Dockerfile for end-to-end testing
+# Creates a fresh JupyterLab environment with no pre-installed extensions
+# Uses the same base image as jupyterlab-biolm for consistency
+
+FROM jupyter/scipy-notebook:latest
+
+USER root
+
+# Set working directory
+WORKDIR /home/jovyan/work
+
+# Expose JupyterLab port
+EXPOSE 8888
+
+# Switch to jovyan user (default user in jupyter images)
+USER $NB_UID
+
+# Start JupyterLab without authentication for testing
+CMD jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --ServerApp.token='' --ServerApp.password='' --IdentityProvider.token=''

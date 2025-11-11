@@ -58,10 +58,18 @@ venv/
 .pytest_cache/
 .coverage
 htmlcov/
+tests/e2e/*.png
+tests/e2e/screenshots/
+playwright-report/
+test-results/
+
+# E2E Test artifacts (entire directory)
+e2e_test/
 
 # Build artifacts
 *.log
 
 # MLflow local data
 mlruns/
+test_mlruns/
 

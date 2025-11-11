@@ -30,6 +30,9 @@ dependencies = [
     "tornado>=6.0.0",
 ]
 
+[project.scripts]
+jupyterlab-mlflow-enable = "jupyterlab_mlflow.post_install:enable_server_extension"
+
 [project.optional-dependencies]
 test = [
     "pytest",
@@ -38,10 +41,6 @@ test = [
     "pytest-cov",
     "playwright",
 ]
-
-[project.entry-points."jupyter_server.server_extensions"]
-jupyterlab_mlflow = "jupyterlab_mlflow.serverextension:_load_jupyter_server_extension"
-jupyterlab_mlflow_pkg = "jupyterlab_mlflow:_load_jupyter_server_extension"
 
 [project.urls]
 Homepage = "https://github.com/BioLM/jupyterlab-mlflow"
@@ -59,8 +58,7 @@ artifacts = ["jupyterlab_mlflow/labextension"]
 "jupyterlab_mlflow/labextension" = "share/jupyter/labextensions/jupyterlab-mlflow"
 "jupyterlab_mlflow/schema" = "share/jupyter/labextensions/jupyterlab-mlflow/schema"
 "install.json" = "share/jupyter/labextensions/jupyterlab-mlflow/install.json"
-"jupyter-config/jupyter_lab_config.d/jupyterlab-mlflow.json" = "etc/jupyter/jupyter_lab_config.d/jupyterlab-mlflow.json"
-"jupyter-config/jupyter_notebook_config.d/jupyterlab-mlflow.json" = "etc/jupyter/jupyter_notebook_config.d/jupyterlab-mlflow.json"
+"jupyter-config/server-config" = "etc/jupyter/jupyter_server_config.d"
 
 [tool.jupyter-releaser.options]
 version_cmd = "hatchling version"

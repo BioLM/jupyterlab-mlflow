@@ -525,6 +525,8 @@ class LocalMLflowServerHandler(MLflowBaseHandler):
 
 def setup_handlers(web_app):
     """Setup API handlers"""
+    import re
+    
     host_pattern = ".*$"
     
     base_url = web_app.settings.get("base_url", "/")
@@ -532,21 +534,25 @@ def setup_handlers(web_app):
     if not base_url.endswith("/"):
         base_url = base_url + "/"
     
+    # Escape base_url for use in regex patterns (Tornado uses regex)
+    # This handles cases where base_url might contain special regex characters
+    escaped_base_url = re.escape(base_url)
+    
     # Remove leading / from mlflow/api paths since base_url already includes it
     handlers = [
         # Health check endpoint (for diagnosing loading issues)
-        (rf"{base_url}mlflow/api/health", HealthCheckHandler),
+        (rf"{escaped_base_url}mlflow/api/health", HealthCheckHandler),
         # Main API endpoints
-        (rf"{base_url}mlflow/api/experiments", ExperimentsHandler),
-        (rf"{base_url}mlflow/api/experiments/([^/]+)", ExperimentHandler),
-        (rf"{base_url}mlflow/api/experiments/([^/]+)/runs", RunsHandler),
-        (rf"{base_url}mlflow/api/runs/([^/]+)", RunHandler),
-        (rf"{base_url}mlflow/api/runs/([^/]+)/artifacts", ArtifactsHandler),
-        (rf"{base_url}mlflow/api/runs/([^/]+)/artifacts/download", ArtifactDownloadHandler),
-        (rf"{base_url}mlflow/api/models", ModelsHandler),
-        (rf"{base_url}mlflow/api/models/([^/]+)", ModelHandler),
-        (rf"{base_url}mlflow/api/connection/test", ConnectionTestHandler),
-        (rf"{base_url}mlflow/api/local-server", LocalMLflowServerHandler),
+        (rf"{escaped_base_url}mlflow/api/experiments", ExperimentsHandler),
+        (rf"{escaped_base_url}mlflow/api/experiments/([^/]+)", ExperimentHandler),
+        (rf"{escaped_base_url}mlflow/api/experiments/([^/]+)/runs", RunsHandler),
+        (rf"{escaped_base_url}mlflow/api/runs/([^/]+)", RunHandler),
+        (rf"{escaped_base_url}mlflow/api/runs/([^/]+)/artifacts", ArtifactsHandler),
+        (rf"{escaped_base_url}mlflow/api/runs/([^/]+)/artifacts/download", ArtifactDownloadHandler),
+        (rf"{escaped_base_url}mlflow/api/models", ModelsHandler),
+        (rf"{escaped_base_url}mlflow/api/models/([^/]+)", ModelHandler),
+        (rf"{escaped_base_url}mlflow/api/connection/test", ConnectionTestHandler),
+        (rf"{escaped_base_url}mlflow/api/local-server", LocalMLflowServerHandler),
     ]
     
     web_app.add_handlers(host_pattern, handlers)

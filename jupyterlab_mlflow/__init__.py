@@ -2,7 +2,48 @@
 JupyterLab MLflow Extension
 """
 
+import subprocess
+import sys
+import os
+
 from ._version import __version__
+
+# Auto-enable server extension on import (if not already enabled)
+def _auto_enable_server_extension():
+    """Attempt to auto-enable the server extension"""
+    try:
+        # Check if already enabled by trying to import the config
+        from jupyter_server.services.config.manager import ConfigManager
+        cm = ConfigManager()
+        
+        # Try to enable the extension
+        result = subprocess.run(
+            [sys.executable, "-m", "jupyter", "server", "extension", "enable",
+             "jupyterlab_mlflow.serverextension", "--sys-prefix"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if result.returncode != 0:
+            # Try without --sys-prefix
+            subprocess.run(
+                [sys.executable, "-m", "jupyter", "server", "extension", "enable",
+                 "jupyterlab_mlflow.serverextension"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+    except Exception:
+        # Silently fail - don't break installation if this doesn't work
+        pass
+
+# Only auto-enable if we're being imported in a Jupyter context
+# (not during build/installation)
+if not os.environ.get('JUPYTERLAB_MLFLOW_SKIP_AUTO_ENABLE'):
+    try:
+        _auto_enable_server_extension()
+    except Exception:
+        pass
 
 def _jupyter_labextension_paths():
     """Called by Jupyter Lab Server to detect if it is a valid labextension and
@@ -19,17 +60,4 @@ def _jupyter_labextension_paths():
         'src': 'labextension',
         'dest': 'jupyterlab-mlflow'
     }]
-
-
-# Also expose server extension functions at package level for compatibility
-def _jupyter_server_extension_points():
-    """Server extension points - also exposed here for compatibility"""
-    from .serverextension import _jupyter_server_extension_points as _points
-    return _points()
-
-
-def _load_jupyter_server_extension(server_app):
-    """Load server extension - also exposed here for compatibility"""
-    from .serverextension import _load_jupyter_server_extension as _load
-    return _load(server_app)
 

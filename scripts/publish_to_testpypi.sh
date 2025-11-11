@@ -75,11 +75,15 @@ if [ -n "$TESTPYPI_TOKEN" ]; then
         --password "$TESTPYPI_TOKEN" \
         dist/*
     echo "✅ Published to TestPyPI"
+elif [ -f ~/.pypirc ]; then
+    echo "   Using credentials from ~/.pypirc"
+    python -m twine upload --repository testpypi dist/*
+    echo "✅ Published to TestPyPI"
 else
-    echo "⚠️  Skipping upload (TESTPYPI_TOKEN not set)"
+    echo "⚠️  Skipping upload (TESTPYPI_TOKEN not set and ~/.pypirc not found)"
     echo "   Package built successfully but not uploaded."
     echo "   To publish manually, run:"
-    echo "   python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*"
+    echo "   python -m twine upload --repository testpypi dist/*"
     echo ""
     echo "   Or set TESTPYPI_TOKEN environment variable and re-run."
     echo "   For testing, you can use an existing version from TestPyPI."

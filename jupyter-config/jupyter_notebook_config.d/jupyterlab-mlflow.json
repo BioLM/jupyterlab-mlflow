@@ -1,8 +1,0 @@
-{
-  "NotebookApp": {
-    "jpserver_extensions": {
-      "jupyterlab_mlflow.serverextension": true
-    }
-  }
-}
-

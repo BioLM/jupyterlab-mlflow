@@ -11,7 +11,7 @@ GREEN := \033[0;32m
 YELLOW := \033[0;33m
 NC := \033[0m # No Color
 
-.PHONY: help build build-lib build-labextension install clean install-deps rebuild dev-install
+.PHONY: help build build-lib build-labextension install clean clean-all install-deps rebuild dev-install
 
 help: ## Show this help message
 	@echo "JupyterLab MLflow Extension - Development Makefile"
@@ -51,6 +51,15 @@ clean: ## Clean build artifacts
 	@rm -rf jupyterlab_mlflow/labextension
 	@rm -rf tsconfig.tsbuildinfo
 	@echo "$(GREEN)✅ Cleaned$(NC)"
+
+clean-all: clean ## Clean all build artifacts including dist and build directories
+	@echo "$(YELLOW)Cleaning all artifacts...$(NC)"
+	npm run clean:lib
+	npm run clean:labextension
+	@rm -rf dist
+	@rm -rf build
+	@rm -rf *.egg-info
+	@echo "$(GREEN)✅ All artifacts cleaned$(NC)"
 
 install-deps: ## Install npm and Python dependencies
 	@echo "$(YELLOW)Installing dependencies...$(NC)"

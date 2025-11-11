@@ -11,6 +11,7 @@ import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { IMainMenu } from '@jupyterlab/mainmenu';
 import { ITranslator } from '@jupyterlab/translation';
 import { ServerConnection } from '@jupyterlab/services';
+import { URLExt } from '@jupyterlab/coreutils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Widget } from '@lumino/widgets';
 
@@ -63,7 +64,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     // Verify server extension is loaded by checking health endpoint
     try {
       const baseUrl = serverSettings.baseUrl;
-      const healthUrl = `${baseUrl}mlflow/api/health`;
+      const healthUrl = URLExt.join(baseUrl, 'mlflow', 'api', 'health');
       const response = await ServerConnection.makeRequest(healthUrl, {}, serverSettings);
       if (!response.ok) {
         console.warn(

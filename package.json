@@ -30,8 +30,7 @@
   "scripts": {
     "build": "jlpm build:lib && jlpm build:labextension:dev",
     "build:prod": "jlpm clean && jlpm build:lib && jlpm build:labextension",
-    "build:labextension": "jupyter labextension build . && npm run copy:extension",
-    "copy:extension": "cp src/extension.js jupyterlab_mlflow/labextension/extension.js",
+    "build:labextension": "jupyter labextension build .",
     "build:labextension:dev": "jupyter labextension build --development .",
     "build:lib": "tsc",
     "build:lib:watch": "tsc --watch",

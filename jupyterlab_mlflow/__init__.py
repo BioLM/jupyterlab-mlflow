@@ -10,9 +10,9 @@ def _jupyter_labextension_paths():
 
     Returns
     =======
-    src: Source directory name to copy files from. Webpack outputs generated files
-        into this directory and Jupyter Lab copies from this directory during
-        widget installation
+    src: Source directory name to copy files from. The JupyterLab builder outputs
+        generated files into this directory and Jupyter Lab copies from this
+        directory during widget installation
     dest: Destination directory name to install to
     """
     return [{

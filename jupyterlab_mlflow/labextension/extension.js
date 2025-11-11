@@ -6,12 +6,23 @@
 import { PageConfig } from '@jupyterlab/coreutils';
 
 async function activate(app, registry, translator, palette, mainMenu) {
-  // Load package.json to get the remoteEntry filename
-  const packageJson = require('./package.json');
-  const remoteEntry = packageJson.jupyterlab?._build?.load || 'static/remoteEntry.399f068a88df455f73db.js';
-  const baseUrl = PageConfig.getOption('fullLabextensionsUrl') || PageConfig.getOption('baseUrl');
-  const remoteEntryUrl = `${baseUrl}/labextensions/jupyterlab-mlflow/${remoteEntry}`;
+  // The remoteEntry filename is set in package.json._build.load during build
+  // For JupyterLab 4.x, we need to construct the URL dynamically
+  const baseUrl = PageConfig.getOption('fullLabextensionsUrl') || PageConfig.getOption('baseUrl') || '';
+  // Try to read the remoteEntry from package.json, fallback to pattern matching
+  let remoteEntry = 'static/remoteEntry.js'; // Default fallback
+  try {
+    const response = await fetch(`${baseUrl}/labextensions/jupyterlab-mlflow/package.json`);
+    if (response.ok) {
+      const pkg = await response.json();
+      remoteEntry = pkg.jupyterlab?._build?.load || remoteEntry;
+    }
+  } catch (e) {
+    // Fallback to default if we can't read package.json
+    console.warn('Could not read package.json, using default remoteEntry:', e);
+  }
   
+  const remoteEntryUrl = `${baseUrl}/labextensions/jupyterlab-mlflow/${remoteEntry}`;
   const { default: extension } = await import(/* webpackChunkName: "jupyterlab-mlflow" */ remoteEntryUrl);
   return extension.activate(app, registry, translator, palette, mainMenu);
 }
@@ -25,3 +36,4 @@ const plugin = {
 };
 
 export default plugin;
+

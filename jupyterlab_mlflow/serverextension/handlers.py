@@ -2,7 +2,9 @@
 MLflow API handlers for JupyterLab extension
 """
 
+import importlib
 import json
+import logging
 import os
 from typing import Dict, Any, Optional
 from urllib.parse import urlparse
@@ -19,6 +21,10 @@ def get_mlflow_client(tracking_uri: Optional[str] = None) -> MlflowClient:
     """
     Get MLflow client with tracking URI from settings or environment.
     
+    If MLFLOW_TRACKING_REQUEST_HEADER_PROVIDER environment variable is set,
+    it will dynamically import and register the specified RequestHeaderProvider
+    class before creating the client.
+    
     Parameters
     ----------
     tracking_uri : str, optional
@@ -29,10 +35,108 @@ def get_mlflow_client(tracking_uri: Optional[str] = None) -> MlflowClient:
     MlflowClient
         Configured MLflow client
     """
+    logger = logging.getLogger(__name__)
+    
+    # Set tracking URI
     if tracking_uri:
         mlflow.set_tracking_uri(tracking_uri)
     elif os.environ.get("MLFLOW_TRACKING_URI"):
         mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
+    
+    # Register RequestHeaderProvider if specified via environment variable
+    provider_class_path = os.environ.get("MLFLOW_TRACKING_REQUEST_HEADER_PROVIDER")
+    if provider_class_path:
+        try:
+            # Parse module path and class name (e.g., "my_module.MyProvider")
+            if '.' not in provider_class_path:
+                raise ValueError(
+                    f"Invalid class path format: {provider_class_path}. "
+                    "Expected format: 'module.path.ClassName'"
+                )
+            
+            module_path, class_name = provider_class_path.rsplit('.', 1)
+            
+            # Dynamically import the module
+            try:
+                module = importlib.import_module(module_path)
+            except ImportError as e:
+                raise ImportError(
+                    f"Failed to import module '{module_path}': {e}. "
+                    "Make sure the module is in your Python path."
+                )
+            
+            # Get the class from the module
+            if not hasattr(module, class_name):
+                raise AttributeError(
+                    f"Module '{module_path}' does not have class '{class_name}'"
+                )
+            
+            provider_class = getattr(module, class_name)
+            
+            # Verify it's a valid RequestHeaderProvider
+            try:
+                from mlflow.tracking.request_header.abstract_request_header_provider import (
+                    RequestHeaderProvider
+                )
+            except ImportError:
+                # Fallback for older MLflow versions
+                try:
+                    from mlflow.tracking.request_header_provider import RequestHeaderProvider
+                except ImportError:
+                    logger.warning(
+                        "Could not import RequestHeaderProvider. "
+                        "MLflow version may not support RequestHeaderProvider. "
+                        "Skipping provider registration."
+                    )
+                    return MlflowClient()
+            
+            if not issubclass(provider_class, RequestHeaderProvider):
+                raise TypeError(
+                    f"Class '{class_name}' is not a subclass of RequestHeaderProvider"
+                )
+            
+            # Instantiate the provider
+            provider_instance = provider_class()
+            
+            # Register with MLflow's registry
+            try:
+                from mlflow.tracking.request_header.default_request_header_provider import (
+                    DefaultRequestHeaderProviderRegistry
+                )
+                registry = DefaultRequestHeaderProviderRegistry()
+                registry.register(provider_instance)
+                logger.info(
+                    f"Successfully registered RequestHeaderProvider: {provider_class_path}"
+                )
+            except ImportError:
+                # Try alternative registration method for different MLflow versions
+                try:
+                    # Some MLflow versions use a different registration mechanism
+                    from mlflow.tracking.request_header_provider import (
+                        register_request_header_provider
+                    )
+                    register_request_header_provider(provider_instance)
+                    logger.info(
+                        f"Successfully registered RequestHeaderProvider: {provider_class_path}"
+                    )
+                except (ImportError, AttributeError):
+                    # If registration fails, log warning but continue
+                    logger.warning(
+                        f"Could not register RequestHeaderProvider {provider_class_path}. "
+                        "MLflow may not support programmatic registration in this version. "
+                        "Provider may need to be registered via MLflow's plugin system."
+                    )
+        
+        except Exception as e:
+            # Log error but don't fail - allow client creation without provider
+            logger.error(
+                f"Failed to register RequestHeaderProvider '{provider_class_path}': {e}",
+                exc_info=True
+            )
+            logger.warning(
+                "Continuing without RequestHeaderProvider. "
+                "MLflow client will be created without custom headers."
+            )
     
     return MlflowClient()
 
@@ -474,7 +578,6 @@ class LocalMLflowServerHandler(MLflowBaseHandler):
                 backend_uri = None
             
             # Log the request for debugging
-            import logging
             logger = logging.getLogger(__name__)
             logger.info(f"Starting local MLflow server: port={port}, tracking_uri={tracking_uri}, artifact_uri={artifact_uri}")
             
@@ -499,7 +602,6 @@ class LocalMLflowServerHandler(MLflowBaseHandler):
                 "error": f"Invalid JSON in request body: {str(e)}"
             })
         except Exception as e:
-            import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Error starting local MLflow server: {e}", exc_info=True)
             self.set_status(500)
@@ -558,7 +660,6 @@ def setup_handlers(web_app):
     web_app.add_handlers(host_pattern, handlers)
     
     # Log registered handlers for debugging
-    import logging
     logger = logging.getLogger(__name__)
     logger.info(f"✅ Registered jupyterlab-mlflow API handlers with base_url: {base_url}")
     # Also print to stderr for visibility in managed environments

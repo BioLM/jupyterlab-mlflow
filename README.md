@@ -44,6 +44,44 @@ The extension can be configured via:
 1. **Settings UI**: Open JupyterLab Settings → Advanced Settings Editor → MLflow
 2. **Environment Variable**: Set `MLFLOW_TRACKING_URI` environment variable
 
+### Custom Request Headers (Authentication)
+
+For MLflow servers that require authentication or custom headers, you can provide a custom `RequestHeaderProvider` via the `MLFLOW_TRACKING_REQUEST_HEADER_PROVIDER` environment variable.
+
+**Example: Custom Authentication Provider**
+
+1. Create a Python module with your custom provider:
+
+```python
+# my_auth_provider.py
+from mlflow.tracking.request_header.abstract_request_header_provider import RequestHeaderProvider
+
+class MyAuthRequestHeaderProvider(RequestHeaderProvider):
+    def in_context(self):
+        """Return True to always provide headers"""
+        return True
+    
+    def request_headers(self):
+        """Return custom headers for MLflow API requests"""
+        import os
+        token = os.environ.get("MY_AUTH_TOKEN", "")
+        return {
+            "Authorization": f"Bearer {token}",
+            "X-Custom-Header": "value"
+        }
+```
+
+2. Set the environment variable with the full class path:
+
+```bash
+export MLFLOW_TRACKING_REQUEST_HEADER_PROVIDER="my_auth_provider.MyAuthRequestHeaderProvider"
+export MY_AUTH_TOKEN="your-secret-token"
+```
+
+The provider will be automatically imported and registered when the extension creates MLflow clients. Make sure the module containing your provider is in your Python path.
+
+**Note**: If the provider cannot be loaded or registered, the extension will log a warning but continue to function without custom headers.
+
 ### Server Extension
 
 The extension includes a server-side component that must be enabled. After installation, enable it with:

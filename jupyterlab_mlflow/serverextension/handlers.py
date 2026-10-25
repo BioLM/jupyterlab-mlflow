@@ -489,22 +489,33 @@ class ModelHandler(MLflowBaseHandler):
             client = get_mlflow_client(tracking_uri)
             
             model = client.get_registered_model(model_name)
-            
-            # Get all versions
+
             versions = []
-            for version in model.latest_versions:
+            for version in client.search_model_versions(f"name='{model_name}'"):
                 versions.append({
                     "version": version.version,
                     "stage": version.current_stage,
                     "status": version.status,
                     "run_id": version.run_id,
                     "creation_timestamp": version.creation_timestamp,
-                    "description": version.description
+                    "description": version.description or "",
                 })
-            
+            versions.sort(key=lambda v: int(v["version"]), reverse=True)
+
+            aliases = []
+            raw_aliases = getattr(model, "aliases", None) or {}
+            if isinstance(raw_aliases, dict):
+                for alias_name, alias_version in raw_aliases.items():
+                    aliases.append({"alias": alias_name, "version": str(alias_version)})
+            else:
+                for alias in raw_aliases:
+                    aliases.append({"alias": alias.alias, "version": alias.version})
+
             self.write({
                 "name": model.name,
                 "versions": versions,
+                "latest_versions": versions,
+                "aliases": aliases,
                 "creation_timestamp": model.creation_timestamp,
                 "last_updated_timestamp": model.last_updated_timestamp,
                 "description": model.description,
